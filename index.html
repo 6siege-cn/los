@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Standalone line-of-sight calculator for Six Siege: The Board Game"
+    />
+    <title>Six Siege — Line of Sight Calculator</title>
+    <link rel="stylesheet" href="./styles/base.css" />
+    <link rel="stylesheet" href="./styles/standalone.css" />
+    <script type="module" src="./scripts/app.js"></script>
+  </head>
+  <body>
+    <div class="hidden-layout">
+      <header class="hidden-header">
+        <div class="header-logo">
+          <div class="r6-logo" aria-hidden="true">6S</div>
+          <h1>Advanced Tools</h1>
+        </div>
+        <div class="standalone-badge">LOS ONLY · BROWSER ENGINE</div>
+      </header>
+
+      <nav class="hidden-nav" aria-label="Tools">
+        <ul>
+          <li><a class="active-nav-link" href="./">Line of Sight</a></li>
+        </ul>
+      </nav>
+
+      <main class="hidden-content">
+        <section class="los-tool" aria-labelledby="page-title">
+          <div class="tactical-header">
+            <div class="tactical-header-title-wrapper">
+              <h2 id="page-title" class="tactical-header-title">
+                Line of Sight Calculator
+              </h2>
+            </div>
+            <div class="tactical-header-decoration" aria-hidden="true">
+              <div class="tactical-header-line"></div>
+              <div class="tactical-header-dot"></div>
+            </div>
+          </div>
+
+          <section class="tactical-panel tactical-panel-hex">
+            <div class="tactical-panel-header">
+              <h3 class="tactical-panel-title">Map Selection</h3>
+              <div class="los-map-selector">
+                <label class="sr-only" for="map-select">Map</label>
+                <select id="map-select" class="tactical-select"></select>
+              </div>
+            </div>
+
+            <div class="tactical-panel-body los-calculator-embed">
+              <div class="calculator-page">
+                <div id="canvas-wrapper" class="canvas-wrapper">
+                  <div id="canvas-container" class="canvas-container">
+                    <canvas
+                      id="map-canvas"
+                      width="800"
+                      height="600"
+                      aria-label="Interactive map for line-of-sight placement"
+                    ></canvas>
+                    <div id="drag-tooltip" class="drag-tooltip visible"></div>
+                  </div>
+                  <div class="zoom-controls" aria-label="Map zoom">
+                    <button id="zoom-out" type="button" title="Zoom Out">
+                      <span aria-hidden="true">−</span>
+                    </button>
+                    <button id="zoom-reset" type="button" title="Reset Zoom">
+                      100%
+                    </button>
+                    <button id="zoom-in" type="button" title="Zoom In">
+                      <span aria-hidden="true">+</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="player-spacer"></div>
+                <div class="calculator-controls">
+                  <div class="player-controls">
+                    <div id="los-result" class="los-result" hidden>
+                      <div id="los-result-icon" class="los-result-icon"></div>
+                      <div>
+                        <strong id="los-result-text"></strong>
+                        <div id="los-result-reason" class="result-reason"></div>
+                      </div>
+                    </div>
+
+                    <div class="controls-main">
+                      <button id="place-blue" type="button" class="blue-button">
+                        Place Blue Player
+                      </button>
+                      <button id="place-orange" type="button" class="orange-button">
+                        Place Orange Player
+                      </button>
+                    </div>
+
+                    <div class="smoke-controls">
+                      <h4>Deploy Smoke</h4>
+                      <div class="smoke-patterns" aria-label="Smoke size">
+                        <button
+                          type="button"
+                          class="smoke-pattern"
+                          data-smoke-width="2"
+                          data-smoke-height="2"
+                          title="2 × 2 smoke"
+                        >
+                          <span class="smoke-preview smoke-preview-2x2" aria-hidden="true">
+                            <i></i><i></i><i></i><i></i>
+                          </span>
+                          <span>2 × 2</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="smoke-pattern"
+                          data-smoke-width="2"
+                          data-smoke-height="1"
+                          title="2 × 1 smoke"
+                        >
+                          <span class="smoke-preview smoke-preview-2x1" aria-hidden="true">
+                            <i></i><i></i>
+                          </span>
+                          <span>2 × 1</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="smoke-pattern"
+                          data-smoke-width="1"
+                          data-smoke-height="2"
+                          title="1 × 2 smoke"
+                        >
+                          <span class="smoke-preview smoke-preview-1x2" aria-hidden="true">
+                            <i></i><i></i>
+                          </span>
+                          <span>1 × 2</span>
+                        </button>
+                      </div>
+                      <p id="smoke-instructions" class="instructions" hidden></p>
+                      <button id="clear-smokes" type="button" class="clear-smokes-button" hidden>
+                        Clear All Smokes
+                      </button>
+                    </div>
+
+                    <div class="controls-main action-row">
+                      <button id="reset-map" type="button" class="secondary-button">
+                        Reset Map
+                      </button>
+                      <button id="check-los" type="button" class="check-los-button" disabled>
+                        Check Line of Sight
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="tactical-panel">
+            <div class="tactical-panel-header">
+              <h3 class="tactical-panel-title">Line of Sight Rules</h3>
+            </div>
+            <div class="tactical-panel-body">
+              <ul class="tactical-list">
+                <li>Line of sight is determined by drawing a straight line between the centers of operators' positions</li>
+                <li>Line of sight is blocked by walls and obstacles</li>
+                <li>Operators cannot see through multiple walls</li>
+                <li>If the line passes through the corner of a wall, sight is blocked</li>
+                <li>Adjacent operators always have line of sight unless directly separated by a wall</li>
+              </ul>
+            </div>
+          </section>
+        </section>
+      </main>
+
+      <footer class="hidden-footer">
+        <div class="footer-content">
+          <div class="footer-logo">6S</div>
+          <p>Six Siege The Board Game — Advanced Tools</p>
+        </div>
+      </footer>
+    </div>
+
+    <div id="status-toast" class="status-toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

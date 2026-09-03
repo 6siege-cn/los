@@ -1,0 +1,241 @@
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.standalone-badge {
+  color: var(--r6s-accent);
+  border: 1px solid color-mix(in srgb, var(--r6s-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--r6s-accent) 10%, transparent);
+  padding: 7px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+
+.hidden-nav ul {
+  max-width: 1200px;
+}
+
+.hidden-nav li {
+  max-width: 260px;
+}
+
+.hidden-nav a.active-nav-link {
+  color: #fff;
+  border-bottom-color: var(--r6s-accent);
+  background: rgba(33, 150, 243, 0.08);
+}
+
+.tactical-header-title {
+  font-family: Roboto, Arial, sans-serif;
+}
+
+.tactical-panel-body {
+  padding: 20px;
+}
+
+.los-calculator-embed {
+  padding: 0;
+}
+
+.canvas-wrapper {
+  max-height: min(72vh, 850px);
+  min-height: 280px;
+  isolation: isolate;
+}
+
+.canvas-container {
+  line-height: 0;
+  transform-origin: top left;
+}
+
+#map-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  user-select: none;
+}
+
+.canvas-wrapper .zoom-controls {
+  position: sticky;
+  float: right;
+  top: 10px;
+  right: 10px;
+  margin-top: -55px;
+  margin-right: 10px;
+}
+
+.drag-tooltip {
+  pointer-events: none;
+  line-height: 1.45;
+  max-width: 310px;
+  white-space: normal;
+}
+
+.player-spacer {
+  height: 22px;
+}
+
+.calculator-controls {
+  padding: 0 20px 20px;
+}
+
+.controls-main button,
+.smoke-controls button,
+.secondary-button {
+  min-height: 42px;
+}
+
+.action-row {
+  grid-template-columns: minmax(150px, 0.5fr) minmax(230px, 1.5fr);
+}
+
+.action-row .check-los-button {
+  grid-column: auto;
+}
+
+.secondary-button {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.secondary-button:hover {
+  background: #3a3a3a;
+}
+
+.smoke-controls {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.smoke-controls h4,
+.smoke-controls p {
+  margin: 0;
+}
+
+.smoke-pattern {
+  min-width: 74px;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.smoke-preview {
+  display: grid;
+  gap: 2px;
+}
+
+.smoke-preview-2x2 {
+  grid-template-columns: repeat(2, 12px);
+}
+
+.smoke-preview-2x1 {
+  grid-template-columns: repeat(2, 12px);
+}
+
+.smoke-preview-1x2 {
+  grid-template-columns: 12px;
+}
+
+.smoke-preview i {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #8c8c8c;
+  box-shadow: inset 0 0 0 2px #666;
+}
+
+.clear-smokes-button {
+  white-space: nowrap;
+}
+
+.result-reason {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.los-result.has-los .los-result-icon {
+  background: var(--r6s-green);
+  color: #fff;
+}
+
+.los-result.no-los .los-result-icon {
+  background: var(--r6s-red);
+  color: #fff;
+}
+
+.player-placed {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7);
+}
+
+.status-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 100;
+  translate: -50% 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--r6s-border);
+  border-radius: 4px;
+  background: rgba(15, 15, 15, 0.94);
+  color: var(--r6s-text);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, translate 0.2s ease;
+}
+
+.status-toast.visible {
+  opacity: 1;
+  translate: -50% 0;
+}
+
+@media (max-width: 768px) {
+  .standalone-badge {
+    display: none;
+  }
+
+  .hidden-nav li {
+    max-width: none;
+  }
+
+  .hidden-content {
+    padding: 18px 10px;
+  }
+
+  .tactical-panel-body,
+  .calculator-controls {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .los-calculator-embed {
+    padding: 0;
+  }
+
+  .smoke-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .action-row {
+    grid-template-columns: 1fr;
+  }
+
+  .controls-main .check-los-button {
+    grid-column: 1;
+  }
+}
