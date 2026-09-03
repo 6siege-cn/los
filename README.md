@@ -8,7 +8,7 @@ placements or calculations to a server.
 
 After GitHub Pages is enabled, the site is published at:
 
-<https://rainlef508.github.io/six-siege-los/>
+<https://6siege-cn.github.io/los/>
 
 ## Features
 
