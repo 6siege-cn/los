@@ -11,7 +11,7 @@
     <title>Six Siege — Line of Sight Calculator</title>
     <link rel="stylesheet" href="./styles/base.css" />
     <link rel="stylesheet" href="./styles/standalone.css?v=20260903.3" />
-    <script type="module" src="./scripts/app.js?v=20260903.3"></script>
+    <script type="module" src="./scripts/app.js?v=20260903.4"></script>
   </head>
   <body>
     <div class="hidden-layout">
@@ -84,7 +84,14 @@
                 <div class="player-spacer"></div>
                 <div class="calculator-controls">
                   <div class="player-controls">
-                    <div id="los-result" class="los-result" hidden>
+                    <div
+                      id="los-result"
+                      class="los-result"
+                      role="status"
+                      aria-live="polite"
+                      aria-atomic="true"
+                      hidden
+                    >
                       <div id="los-result-icon" class="los-result-icon"></div>
                       <div>
                         <strong id="los-result-text"></strong>
@@ -147,12 +154,13 @@
                       </button>
                     </div>
 
-                    <div class="controls-main action-row">
+                    <p class="auto-calculate-note">
+                      Line of sight updates automatically when the board changes.
+                    </p>
+
+                    <div class="controls-main action-row reset-row">
                       <button id="reset-map" type="button" class="secondary-button">
                         Reset Map
-                      </button>
-                      <button id="check-los" type="button" class="check-los-button" disabled>
-                        Check Line of Sight
                       </button>
                     </div>
                   </div>

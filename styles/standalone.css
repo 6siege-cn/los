@@ -173,6 +173,17 @@
   font-size: 13px;
 }
 
+.auto-calculate-note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.reset-row {
+  grid-template-columns: 1fr;
+}
+
 .los-result.has-los .los-result-icon {
   background: var(--r6s-green);
   color: #fff;

@@ -8,7 +8,6 @@ const mapSelect = document.querySelector("#map-select");
 const tooltip = document.querySelector("#drag-tooltip");
 const placeBlueButton = document.querySelector("#place-blue");
 const placeOrangeButton = document.querySelector("#place-orange");
-const checkButton = document.querySelector("#check-los");
 const resetButton = document.querySelector("#reset-map");
 const clearSmokesButton = document.querySelector("#clear-smokes");
 const smokeInstructions = document.querySelector("#smoke-instructions");
@@ -28,6 +27,8 @@ const WALL_COLORS = {
   orange: "#f57c00",
   window: "#0288d1",
 };
+
+let scheduledCalculation = null;
 
 const state = {
   maps: [],
@@ -56,8 +57,22 @@ function showToast(message) {
 }
 
 function invalidateResult() {
-  state.result = null;
-  resultPanel.hidden = true;
+  if (!state.blue || !state.orange || !state.map) {
+    state.result = null;
+    resultPanel.hidden = true;
+    if (scheduledCalculation !== null) {
+      cancelAnimationFrame(scheduledCalculation);
+      scheduledCalculation = null;
+    }
+    return;
+  }
+
+  if (scheduledCalculation === null) {
+    scheduledCalculation = requestAnimationFrame(() => {
+      scheduledCalculation = null;
+      calculateCurrentLineOfSight();
+    });
+  }
 }
 
 function normalizeWall(raw) {
@@ -543,8 +558,6 @@ function updateControls() {
   placeOrangeButton.classList.toggle("player-placed", Boolean(state.orange));
   placeBlueButton.disabled = state.activeTeam === "blue";
   placeOrangeButton.disabled = state.activeTeam === "orange";
-  checkButton.disabled = !(state.blue && state.orange);
-
   smokeButtons.forEach((button) => {
     const matches =
       state.selectedSmokePattern &&
@@ -584,10 +597,8 @@ function updateResultPanel(result) {
   }
 }
 
-function checkLineOfSight() {
+function calculateCurrentLineOfSight() {
   if (!state.blue || !state.orange || !state.map) return;
-  checkButton.disabled = true;
-  checkButton.textContent = "Checking…";
   try {
     const result = calculateLineOfSight({
       map: state.map,
@@ -601,9 +612,6 @@ function checkLineOfSight() {
     draw();
   } catch (error) {
     showToast(error.message);
-  } finally {
-    checkButton.textContent = "Check Line of Sight";
-    checkButton.disabled = !(state.blue && state.orange);
   }
 }
 
@@ -752,7 +760,6 @@ resetButton.addEventListener("click", () => {
   draw();
 });
 
-checkButton.addEventListener("click", checkLineOfSight);
 zoomOutButton.addEventListener("click", () => setZoom(state.zoom - 50));
 zoomResetButton.addEventListener("click", () => setZoom(preferredZoom()));
 zoomInButton.addEventListener("click", () => setZoom(state.zoom + 50));

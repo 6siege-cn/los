@@ -14,6 +14,13 @@ test("page declares a mobile viewport and mobile map guidance", () => {
   assert.match(html, /class="mobile-map-help"/);
 });
 
+test("line of sight is automatic and has an accessible live result", () => {
+  assert.doesNotMatch(html, /id="check-los"/);
+  assert.match(html, /id="los-result"[\s\S]*aria-live="polite"/);
+  assert.match(app, /requestAnimationFrame/);
+  assert.match(app, /calculateCurrentLineOfSight/);
+});
+
 test("mobile controls remain in document flow with touch-sized targets", () => {
   assert.match(css, /@media \(max-width: 768px\)/);
   assert.match(css, /\.calculator-controls\s*\{[^}]*position: static/s);
