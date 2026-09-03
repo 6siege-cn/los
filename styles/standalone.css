@@ -71,8 +71,13 @@
   float: right;
   top: 10px;
   right: 10px;
-  margin-top: -55px;
+  margin-top: 10px;
+  margin-bottom: -55px;
   margin-right: 10px;
+}
+
+.mobile-map-help {
+  display: none;
 }
 
 .drag-tooltip {
@@ -205,16 +210,58 @@
 }
 
 @media (max-width: 768px) {
+  .hidden-header {
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 12px;
+  }
+
+  .hidden-header h1 {
+    font-size: 20px;
+    letter-spacing: 1px;
+  }
+
   .standalone-badge {
     display: none;
   }
 
-  .hidden-nav li {
-    max-width: none;
+  .hidden-nav {
+    display: none;
   }
 
   .hidden-content {
-    padding: 18px 10px;
+    padding: 16px 10px;
+    overflow: visible;
+  }
+
+  .tactical-header {
+    margin-bottom: 22px;
+  }
+
+  .tactical-header-title-wrapper,
+  .tactical-header-title {
+    height: auto;
+    max-height: none;
+  }
+
+  .tactical-header-title {
+    display: block;
+    font-size: 22px;
+    line-height: 1.2;
+    letter-spacing: 1px;
+  }
+
+  .tactical-panel {
+    margin-bottom: 20px;
+  }
+
+  .tactical-panel-header {
+    padding: 14px 16px;
+  }
+
+  .los-map-selector,
+  .tactical-select {
+    width: 100%;
   }
 
   .tactical-panel-body,
@@ -225,10 +272,81 @@
 
   .los-calculator-embed {
     padding: 0;
+    padding-bottom: 0;
+  }
+
+  .canvas-wrapper {
+    height: min(58svh, 520px);
+    min-height: 360px;
+    max-height: 520px;
+    border-radius: 0;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .canvas-wrapper .zoom-controls {
+    top: 8px;
+    right: 8px;
+    margin-top: 8px;
+    margin-right: 8px;
+    margin-bottom: -61px;
+  }
+
+  .zoom-controls button {
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
+  }
+
+  .zoom-controls button:nth-child(2) {
+    min-width: 64px;
+  }
+
+  .drag-tooltip {
+    display: none;
+  }
+
+  .mobile-map-help {
+    display: block;
+    margin: 10px 12px 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .player-spacer {
+    height: 10px;
+  }
+
+  .calculator-controls {
+    position: static;
+    width: auto;
+    max-height: none;
+    overflow: visible;
+    padding-top: 0;
+    box-shadow: none;
+  }
+
+  .controls-main button,
+  .smoke-controls button,
+  .secondary-button {
+    min-height: 48px;
   }
 
   .smoke-controls {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .smoke-patterns {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .smoke-pattern {
+    min-width: 0;
   }
 
   .action-row {
@@ -237,5 +355,19 @@
 
   .controls-main .check-los-button {
     grid-column: 1;
+  }
+
+  .hidden-footer {
+    padding: 16px 12px;
+  }
+
+  .hidden-footer p {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .controls-main {
+    grid-template-columns: 1fr;
   }
 }

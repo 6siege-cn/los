@@ -2,6 +2,7 @@ import { checkLineOfSight as calculateLineOfSight } from "./los-engine.js";
 
 const canvas = document.querySelector("#map-canvas");
 const context = canvas.getContext("2d");
+const canvasWrapper = document.querySelector("#canvas-wrapper");
 const canvasContainer = document.querySelector("#canvas-container");
 const mapSelect = document.querySelector("#map-select");
 const tooltip = document.querySelector("#drag-tooltip");
@@ -41,6 +42,7 @@ const state = {
   hoverCell: null,
   hoverWall: null,
   draggingTeam: null,
+  panGesture: null,
   pendingCanvasClick: false,
   result: null,
   zoom: 100,
@@ -100,6 +102,8 @@ function loadMap(mapId) {
     state.image = image;
     canvas.width = image.naturalWidth;
     canvas.height = image.naturalHeight;
+    canvasWrapper.scrollLeft = 0;
+    canvasWrapper.scrollTop = 0;
     draw();
   });
   image.addEventListener("error", () => {
@@ -609,6 +613,10 @@ function setZoom(value) {
   zoomResetButton.textContent = `${state.zoom}%`;
 }
 
+function preferredZoom() {
+  return window.matchMedia("(max-width: 768px)").matches ? 250 : 100;
+}
+
 canvas.addEventListener("pointerdown", (event) => {
   const point = eventPoint(event);
   const team = playerAt(point);
@@ -622,10 +630,38 @@ canvas.addEventListener("pointerdown", (event) => {
     event.preventDefault();
   } else {
     state.pendingCanvasClick = true;
+    const mapCanPan =
+      canvasContainer.scrollWidth > canvasWrapper.clientWidth ||
+      canvasContainer.scrollHeight > canvasWrapper.clientHeight;
+    if (mapCanPan) {
+      state.panGesture = {
+        pointerId: event.pointerId,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        scrollLeft: canvasWrapper.scrollLeft,
+        scrollTop: canvasWrapper.scrollTop,
+        moved: false,
+      };
+      canvas.setPointerCapture(event.pointerId);
+    }
   }
 });
 
 canvas.addEventListener("pointermove", (event) => {
+  if (state.panGesture?.pointerId === event.pointerId) {
+    const deltaX = event.clientX - state.panGesture.clientX;
+    const deltaY = event.clientY - state.panGesture.clientY;
+    if (Math.hypot(deltaX, deltaY) > 8) {
+      state.panGesture.moved = true;
+      state.pendingCanvasClick = false;
+    }
+    if (state.panGesture.moved) {
+      canvasWrapper.scrollLeft = state.panGesture.scrollLeft - deltaX;
+      canvasWrapper.scrollTop = state.panGesture.scrollTop - deltaY;
+      event.preventDefault();
+      return;
+    }
+  }
   const point = eventPoint(event);
   state.hoverCell = gridCellAt(point);
   state.hoverWall = findOptionalWall(point);
@@ -639,6 +675,12 @@ canvas.addEventListener("pointermove", (event) => {
 
 canvas.addEventListener("pointerup", (event) => {
   const point = eventPoint(event);
+  const wasPanning = state.panGesture?.moved ?? false;
+  state.panGesture = null;
+  if (wasPanning) {
+    state.pendingCanvasClick = false;
+    return;
+  }
   if (state.draggingTeam) {
     state.draggingTeam = null;
     updateControls();
@@ -651,6 +693,7 @@ canvas.addEventListener("pointerup", (event) => {
 
 canvas.addEventListener("pointercancel", () => {
   state.draggingTeam = null;
+  state.panGesture = null;
   state.pendingCanvasClick = false;
   updateControls();
   draw();
@@ -711,7 +754,7 @@ resetButton.addEventListener("click", () => {
 
 checkButton.addEventListener("click", checkLineOfSight);
 zoomOutButton.addEventListener("click", () => setZoom(state.zoom - 50));
-zoomResetButton.addEventListener("click", () => setZoom(100));
+zoomResetButton.addEventListener("click", () => setZoom(preferredZoom()));
 zoomInButton.addEventListener("click", () => setZoom(state.zoom + 50));
 
 async function initialize() {
@@ -725,7 +768,7 @@ async function initialize() {
       option.textContent = map.name;
       mapSelect.append(option);
     }
-    setZoom(100);
+    setZoom(preferredZoom());
     loadMap(state.maps[0].id);
   } catch (error) {
     showToast(error.message);

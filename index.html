@@ -10,8 +10,8 @@
     />
     <title>Six Siege — Line of Sight Calculator</title>
     <link rel="stylesheet" href="./styles/base.css" />
-    <link rel="stylesheet" href="./styles/standalone.css" />
-    <script type="module" src="./scripts/app.js"></script>
+    <link rel="stylesheet" href="./styles/standalone.css?v=20260903.3" />
+    <script type="module" src="./scripts/app.js?v=20260903.3"></script>
   </head>
   <body>
     <div class="hidden-layout">
@@ -55,15 +55,6 @@
             <div class="tactical-panel-body los-calculator-embed">
               <div class="calculator-page">
                 <div id="canvas-wrapper" class="canvas-wrapper">
-                  <div id="canvas-container" class="canvas-container">
-                    <canvas
-                      id="map-canvas"
-                      width="800"
-                      height="600"
-                      aria-label="Interactive map for line-of-sight placement"
-                    ></canvas>
-                    <div id="drag-tooltip" class="drag-tooltip visible"></div>
-                  </div>
                   <div class="zoom-controls" aria-label="Map zoom">
                     <button id="zoom-out" type="button" title="Zoom Out">
                       <span aria-hidden="true">−</span>
@@ -75,7 +66,20 @@
                       <span aria-hidden="true">+</span>
                     </button>
                   </div>
+                  <div id="canvas-container" class="canvas-container">
+                    <canvas
+                      id="map-canvas"
+                      width="800"
+                      height="600"
+                      aria-label="Interactive map for line-of-sight placement"
+                    ></canvas>
+                    <div id="drag-tooltip" class="drag-tooltip visible"></div>
+                  </div>
                 </div>
+
+                <p class="mobile-map-help">
+                  Drag to pan · Tap a cell to place · Tap colored walls to toggle
+                </p>
 
                 <div class="player-spacer"></div>
                 <div class="calculator-controls">
