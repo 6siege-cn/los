@@ -1,31 +1,31 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Standalone line-of-sight calculator for Six Siege: The Board Game"
+      content="《彩虹六号：围攻》桌游视线测量工具"
     />
-    <title>Six Siege — Line of Sight Calculator</title>
+    <title>彩虹六号：围攻 — 视线测量工具</title>
     <link rel="stylesheet" href="./styles/base.css" />
     <link rel="stylesheet" href="./styles/standalone.css?v=20260903.3" />
-    <script type="module" src="./scripts/app.js?v=20260903.5"></script>
+    <script type="module" src="./scripts/app.js?v=20260903.6"></script>
   </head>
   <body>
     <div class="hidden-layout">
       <header class="hidden-header">
         <div class="header-logo">
           <div class="r6-logo" aria-hidden="true">6S</div>
-          <h1>Advanced Tools</h1>
+          <h1>进阶工具</h1>
         </div>
-        <div class="standalone-badge">LOS ONLY · BROWSER ENGINE</div>
+        <div class="standalone-badge">视线工具 · 浏览器本地运算</div>
       </header>
 
-      <nav class="hidden-nav" aria-label="Tools">
+      <nav class="hidden-nav" aria-label="工具导航">
         <ul>
-          <li><a class="active-nav-link" href="./">Line of Sight</a></li>
+          <li><a class="active-nav-link" href="./">视线测量</a></li>
         </ul>
       </nav>
 
@@ -34,7 +34,7 @@
           <div class="tactical-header">
             <div class="tactical-header-title-wrapper">
               <h2 id="page-title" class="tactical-header-title">
-                Line of Sight Calculator
+                视线测量工具
               </h2>
             </div>
             <div class="tactical-header-decoration" aria-hidden="true">
@@ -45,9 +45,9 @@
 
           <section class="tactical-panel tactical-panel-hex">
             <div class="tactical-panel-header">
-              <h3 class="tactical-panel-title">Map Selection</h3>
+              <h3 class="tactical-panel-title">选择地图</h3>
               <div class="los-map-selector">
-                <label class="sr-only" for="map-select">Map</label>
+                <label class="sr-only" for="map-select">地图</label>
                 <select id="map-select" class="tactical-select"></select>
               </div>
             </div>
@@ -55,14 +55,14 @@
             <div class="tactical-panel-body los-calculator-embed">
               <div class="calculator-page">
                 <div id="canvas-wrapper" class="canvas-wrapper">
-                  <div class="zoom-controls" aria-label="Map zoom">
-                    <button id="zoom-out" type="button" title="Zoom Out">
+                  <div class="zoom-controls" aria-label="地图缩放">
+                    <button id="zoom-out" type="button" title="缩小地图">
                       <span aria-hidden="true">−</span>
                     </button>
-                    <button id="zoom-reset" type="button" title="Reset Zoom">
+                    <button id="zoom-reset" type="button" title="重置缩放">
                       100%
                     </button>
-                    <button id="zoom-in" type="button" title="Zoom In">
+                    <button id="zoom-in" type="button" title="放大地图">
                       <span aria-hidden="true">+</span>
                     </button>
                   </div>
@@ -71,14 +71,14 @@
                       id="map-canvas"
                       width="800"
                       height="600"
-                      aria-label="Interactive map. Tap to place, drag to pan, and pinch to zoom"
+                      aria-label="交互式地图：轻触放置，单指拖动平移，双指缩放"
                     ></canvas>
                     <div id="drag-tooltip" class="drag-tooltip visible"></div>
                   </div>
                 </div>
 
                 <p class="mobile-map-help">
-                  Drag to pan · Pinch to zoom · Tap a cell to place
+                  单指拖动平移 · 双指缩放 · 轻触格子放置
                 </p>
 
                 <div class="player-spacer"></div>
@@ -101,22 +101,22 @@
 
                     <div class="controls-main">
                       <button id="place-blue" type="button" class="blue-button">
-                        Place Blue Player
+                        放置蓝方干员
                       </button>
                       <button id="place-orange" type="button" class="orange-button">
-                        Place Orange Player
+                        放置橙方干员
                       </button>
                     </div>
 
                     <div class="smoke-controls">
-                      <h4>Deploy Smoke</h4>
-                      <div class="smoke-patterns" aria-label="Smoke size">
+                      <h4>部署烟雾</h4>
+                      <div class="smoke-patterns" aria-label="烟雾范围">
                         <button
                           type="button"
                           class="smoke-pattern"
                           data-smoke-width="2"
                           data-smoke-height="2"
-                          title="2 × 2 smoke"
+                          title="2 × 2 烟雾"
                         >
                           <span class="smoke-preview smoke-preview-2x2" aria-hidden="true">
                             <i></i><i></i><i></i><i></i>
@@ -128,7 +128,7 @@
                           class="smoke-pattern"
                           data-smoke-width="2"
                           data-smoke-height="1"
-                          title="2 × 1 smoke"
+                          title="2 × 1 烟雾"
                         >
                           <span class="smoke-preview smoke-preview-2x1" aria-hidden="true">
                             <i></i><i></i>
@@ -140,7 +140,7 @@
                           class="smoke-pattern"
                           data-smoke-width="1"
                           data-smoke-height="2"
-                          title="1 × 2 smoke"
+                          title="1 × 2 烟雾"
                         >
                           <span class="smoke-preview smoke-preview-1x2" aria-hidden="true">
                             <i></i><i></i>
@@ -150,17 +150,17 @@
                       </div>
                       <p id="smoke-instructions" class="instructions" hidden></p>
                       <button id="clear-smokes" type="button" class="clear-smokes-button" hidden>
-                        Clear All Smokes
+                        清除所有烟雾
                       </button>
                     </div>
 
                     <p class="auto-calculate-note">
-                      Line of sight updates automatically when the board changes.
+                      棋盘发生变化后，视线结果会自动更新。
                     </p>
 
                     <div class="controls-main action-row reset-row">
                       <button id="reset-map" type="button" class="secondary-button">
-                        Reset Map
+                        重置地图
                       </button>
                     </div>
                   </div>
@@ -171,15 +171,15 @@
 
           <section class="tactical-panel">
             <div class="tactical-panel-header">
-              <h3 class="tactical-panel-title">Line of Sight Rules</h3>
+              <h3 class="tactical-panel-title">视线规则</h3>
             </div>
             <div class="tactical-panel-body">
               <ul class="tactical-list">
-                <li>Line of sight is determined by drawing a straight line between the centers of operators' positions</li>
-                <li>Line of sight is blocked by walls and obstacles</li>
-                <li>Operators cannot see through multiple walls</li>
-                <li>If the line passes through the corner of a wall, sight is blocked</li>
-                <li>Adjacent operators always have line of sight unless directly separated by a wall</li>
+                <li>视线通过连接两名干员所在格中心点的直线来判定</li>
+                <li>墙壁和障碍物会阻挡视线</li>
+                <li>干员无法透过多面墙看见对方</li>
+                <li>视线经过墙角时，视为被阻挡</li>
+                <li>相邻干员始终拥有视线，除非二者之间有墙壁直接阻隔</li>
               </ul>
             </div>
           </section>
@@ -189,7 +189,7 @@
       <footer class="hidden-footer">
         <div class="footer-content">
           <div class="footer-logo">6S</div>
-          <p>Six Siege The Board Game — Advanced Tools</p>
+          <p>《彩虹六号：围攻》桌游 — 进阶工具</p>
         </div>
       </footer>
     </div>

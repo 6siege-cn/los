@@ -29,6 +29,29 @@ const WALL_COLORS = {
   window: "#0288d1",
 };
 
+const MAP_NAMES = {
+  consulate: "领事馆",
+  clubhouse: "俱乐部会所",
+  bank: "银行",
+  kafe: "杜斯妥也夫斯基咖啡馆",
+  chalet: "木屋",
+  oregon: "俄勒冈乡间屋宅",
+  coastline: "海岸线",
+  border: "边境",
+};
+
+const TEAM_NAMES = {
+  blue: "蓝方",
+  orange: "橙方",
+};
+
+const WALL_NAMES = {
+  main: "固定墙",
+  red: "红墙",
+  orange: "橙墙",
+  window: "窗户",
+};
+
 let scheduledCalculation = null;
 const activeTouchPointers = new Map();
 let pinchGesture = null;
@@ -125,7 +148,7 @@ function loadMap(mapId) {
     draw();
   });
   image.addEventListener("error", () => {
-    showToast(`Could not load ${selected.name}`);
+    showToast(`无法加载地图“${MAP_NAMES[selected.id] ?? selected.name}”`);
   });
   state.image = null;
   image.src = `./assets/${selected.id}.jpg`;
@@ -540,23 +563,23 @@ function draw() {
 
 function updateTooltip() {
   if (state.draggingTeam) {
-    tooltip.textContent = `Drag the ${state.draggingTeam} player to another cell`;
+    tooltip.textContent = `将${TEAM_NAMES[state.draggingTeam]}干员拖到另一个格子`;
   } else if (state.selectedSmokePattern) {
-    tooltip.textContent = `Click to place ${state.selectedSmokePattern.width} × ${state.selectedSmokePattern.height} smoke`;
+    tooltip.textContent = `轻触地图，放置 ${state.selectedSmokePattern.width} × ${state.selectedSmokePattern.height} 烟雾`;
   } else if (state.activeTeam) {
-    tooltip.textContent = `Click a grid cell to place the ${state.activeTeam} player`;
+    tooltip.textContent = `轻触一个格子，放置${TEAM_NAMES[state.activeTeam]}干员`;
   } else {
     tooltip.innerHTML =
-      "1. First click adds Blue Player<br>" +
-      "2. Second click adds Orange Player<br>" +
-      "3. Click breakable walls to toggle them<br>" +
-      "4. Drag players to move them";
+      "1. 第一次轻触放置蓝方干员<br>" +
+      "2. 第二次轻触放置橙方干员<br>" +
+      "3. 轻触可破坏墙壁以切换状态<br>" +
+      "4. 拖动干员即可移动";
   }
 }
 
 function updateControls() {
-  placeBlueButton.textContent = state.blue ? "Blue Player ✓" : "Place Blue Player";
-  placeOrangeButton.textContent = state.orange ? "Orange Player ✓" : "Place Orange Player";
+  placeBlueButton.textContent = state.blue ? "蓝方干员 ✓" : "放置蓝方干员";
+  placeOrangeButton.textContent = state.orange ? "橙方干员 ✓" : "放置橙方干员";
   placeBlueButton.classList.toggle("player-placed", Boolean(state.blue));
   placeOrangeButton.classList.toggle("player-placed", Boolean(state.orange));
   placeBlueButton.disabled = state.activeTeam === "blue";
@@ -572,11 +595,11 @@ function updateControls() {
   smokeInstructions.hidden = !state.selectedSmokePattern;
   if (state.selectedSmokePattern) {
     smokeInstructions.textContent =
-      `Click on the map to place the ${state.selectedSmokePattern.width} × ` +
-      `${state.selectedSmokePattern.height} smoke`;
+      `轻触地图，放置 ${state.selectedSmokePattern.width} × ` +
+      `${state.selectedSmokePattern.height} 烟雾`;
   }
   clearSmokesButton.hidden = state.smokes.length === 0;
-  clearSmokesButton.textContent = `Clear All Smokes (${state.smokes.length})`;
+  clearSmokesButton.textContent = `清除所有烟雾（${state.smokes.length}）`;
   updateTooltip();
 }
 
@@ -586,17 +609,17 @@ function updateResultPanel(result) {
   resultPanel.classList.toggle("no-los", !result.hasLineOfSight);
   resultIcon.textContent = result.hasLineOfSight ? "✓" : "×";
   resultText.textContent = result.hasLineOfSight
-    ? "Line of Sight: YES"
-    : "Line of Sight: NO";
+    ? "视线：可见"
+    : "视线：被阻挡";
   if (result.blockedBySmoke) {
-    resultReason.textContent = "Blocked by smoke";
+    resultReason.textContent = "视线被烟雾阻挡";
   } else if (result.blockedByWalls) {
     const labels = result.blockingWalls.map(
-      (wall) => `${wall.kind} #${wall.index + 1}`,
+      (wall) => `${WALL_NAMES[wall.kind] ?? wall.kind} #${wall.index + 1}`,
     );
-    resultReason.textContent = `Blocked by ${labels.join(", ")}`;
+    resultReason.textContent = `被 ${labels.join("、")} 阻挡`;
   } else {
-    resultReason.textContent = "The sight strip is clear";
+    resultReason.textContent = "视线通道畅通";
   }
 }
 
@@ -865,12 +888,12 @@ zoomInButton.addEventListener("click", () => setZoom(state.zoom + 50));
 async function initialize() {
   try {
     const response = await fetch("./data/maps.json");
-    if (!response.ok) throw new Error("Could not load map definitions");
+    if (!response.ok) throw new Error("无法加载地图数据");
     state.maps = await response.json();
     for (const map of state.maps) {
       const option = document.createElement("option");
       option.value = map.id;
-      option.textContent = map.name;
+      option.textContent = MAP_NAMES[map.id] ?? map.name;
       mapSelect.append(option);
     }
     setZoom(preferredZoom());

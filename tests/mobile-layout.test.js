@@ -38,5 +38,13 @@ test("map supports two-pointer pinch zoom", () => {
   assert.match(app, /activeTouchPointers/);
   assert.match(app, /beginPinchGesture/);
   assert.match(app, /updatePinchGesture/);
-  assert.match(html, /Pinch to zoom/);
+  assert.match(html, /双指缩放/);
+});
+
+test("visible interface copy is localized in Simplified Chinese", () => {
+  assert.match(html, /<html lang="zh-CN">/);
+  assert.match(html, /视线测量工具/);
+  assert.match(html, /放置蓝方干员/);
+  assert.match(app, /视线：可见/);
+  assert.match(app, /杜斯妥也夫斯基咖啡馆/);
 });
