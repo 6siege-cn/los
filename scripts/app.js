@@ -1,4 +1,5 @@
 import { checkLineOfSight as calculateLineOfSight } from "./los-engine.js";
+import { calculatePinchTransform, pointerPair } from "./pinch-zoom.js?v=20260903.1";
 
 const canvas = document.querySelector("#map-canvas");
 const context = canvas.getContext("2d");
@@ -29,6 +30,8 @@ const WALL_COLORS = {
 };
 
 let scheduledCalculation = null;
+const activeTouchPointers = new Map();
+let pinchGesture = null;
 
 const state = {
   maps: [],
@@ -625,7 +628,73 @@ function preferredZoom() {
   return window.matchMedia("(max-width: 768px)").matches ? 250 : 100;
 }
 
+function beginPinchGesture() {
+  const pointers = [...activeTouchPointers.values()];
+  if (pointers.length < 2) return false;
+  const pair = pointerPair(pointers[0], pointers[1]);
+  const wrapperBounds = canvasWrapper.getBoundingClientRect();
+  pinchGesture = {
+    distance: pair.distance,
+    zoom: state.zoom,
+    contentX:
+      canvasWrapper.scrollLeft + pair.midpoint.x - wrapperBounds.left,
+    contentY:
+      canvasWrapper.scrollTop + pair.midpoint.y - wrapperBounds.top,
+  };
+  state.draggingTeam = null;
+  state.panGesture = null;
+  state.pendingCanvasClick = false;
+  state.hoverCell = null;
+  state.hoverWall = null;
+  updateControls();
+  draw();
+  return true;
+}
+
+function updatePinchGesture() {
+  const pointers = [...activeTouchPointers.values()];
+  if (!pinchGesture || pointers.length < 2) return;
+  const wrapperBounds = canvasWrapper.getBoundingClientRect();
+  const transform = calculatePinchTransform({
+    start: pinchGesture,
+    first: pointers[0],
+    second: pointers[1],
+    wrapperLeft: wrapperBounds.left,
+    wrapperTop: wrapperBounds.top,
+  });
+  setZoom(transform.zoom);
+  canvasWrapper.scrollLeft = transform.scrollLeft;
+  canvasWrapper.scrollTop = transform.scrollTop;
+}
+
+function continuePanWithRemainingTouch() {
+  const remaining = [...activeTouchPointers.entries()][0];
+  if (!remaining) return;
+  const [pointerId, pointer] = remaining;
+  state.panGesture = {
+    pointerId,
+    clientX: pointer.clientX,
+    clientY: pointer.clientY,
+    scrollLeft: canvasWrapper.scrollLeft,
+    scrollTop: canvasWrapper.scrollTop,
+    moved: true,
+  };
+}
+
 canvas.addEventListener("pointerdown", (event) => {
+  if (event.pointerType === "touch") {
+    activeTouchPointers.set(event.pointerId, {
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
+    canvas.setPointerCapture(event.pointerId);
+    if (activeTouchPointers.size >= 2) {
+      if (!pinchGesture) beginPinchGesture();
+      event.preventDefault();
+      return;
+    }
+  }
+
   const point = eventPoint(event);
   const team = playerAt(point);
   if (team) {
@@ -656,6 +725,18 @@ canvas.addEventListener("pointerdown", (event) => {
 });
 
 canvas.addEventListener("pointermove", (event) => {
+  if (event.pointerType === "touch" && activeTouchPointers.has(event.pointerId)) {
+    activeTouchPointers.set(event.pointerId, {
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
+    if (pinchGesture && activeTouchPointers.size >= 2) {
+      updatePinchGesture();
+      event.preventDefault();
+      return;
+    }
+  }
+
   if (state.panGesture?.pointerId === event.pointerId) {
     const deltaX = event.clientX - state.panGesture.clientX;
     const deltaY = event.clientY - state.panGesture.clientY;
@@ -682,6 +763,21 @@ canvas.addEventListener("pointermove", (event) => {
 });
 
 canvas.addEventListener("pointerup", (event) => {
+  if (event.pointerType === "touch") {
+    const wasPinching = pinchGesture !== null;
+    activeTouchPointers.delete(event.pointerId);
+    if (wasPinching) {
+      pinchGesture = null;
+      state.pendingCanvasClick = false;
+      if (activeTouchPointers.size >= 2) {
+        beginPinchGesture();
+      } else {
+        continuePanWithRemainingTouch();
+      }
+      return;
+    }
+  }
+
   const point = eventPoint(event);
   const wasPanning = state.panGesture?.moved ?? false;
   state.panGesture = null;
@@ -699,7 +795,9 @@ canvas.addEventListener("pointerup", (event) => {
   state.pendingCanvasClick = false;
 });
 
-canvas.addEventListener("pointercancel", () => {
+canvas.addEventListener("pointercancel", (event) => {
+  activeTouchPointers.delete(event.pointerId);
+  pinchGesture = null;
   state.draggingTeam = null;
   state.panGesture = null;
   state.pendingCanvasClick = false;

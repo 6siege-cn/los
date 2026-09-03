@@ -33,3 +33,10 @@ test("mobile view starts enlarged and supports drag-to-pan", () => {
   assert.match(app, /state\.panGesture/);
   assert.match(app, /canvasWrapper\.scrollLeft = state\.panGesture\.scrollLeft/);
 });
+
+test("map supports two-pointer pinch zoom", () => {
+  assert.match(app, /activeTouchPointers/);
+  assert.match(app, /beginPinchGesture/);
+  assert.match(app, /updatePinchGesture/);
+  assert.match(html, /Pinch to zoom/);
+});
