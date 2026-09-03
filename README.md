@@ -1,47 +1,38 @@
-# Six Siege Line of Sight Calculator
+# 彩虹六号桌游视线计算器
 
-A browser-only line-of-sight calculator for *Six Siege: The Board Game*.
-The application runs entirely on the user's device and does not send map
-placements or calculations to a server.
+这是一个自用网站，用于在浏览器中计算《彩虹六号：围攻》桌游的视线。所有地图点位和计算均在本地浏览器中完成，不会上传到服务器。
 
-## Website
+在线地址：<https://6siege-cn.github.io/los/>
 
-After GitHub Pages is enabled, the site is published at:
+## 交流
 
-<https://6siege-cn.github.io/los/>
+QQ 群：**793079480**
 
-## Features
+## 功能
 
-- Eight maps with their original grid alignment
-- Blue and Orange player placement and dragging
-- Openable walls and windows
-- 2x2, 2x1, and 1x2 smoke patterns
-- Browser-local line-of-sight calculation
-- Responsive canvas zoom from 50% to 1000%
+- 支持 8 张地图及其原始网格对齐
+- 支持蓝方、橙方干员的放置和拖动
+- 支持墙壁与窗户的开启和关闭
+- 支持 2×2、2×1 和 1×2 烟雾范围
+- 在浏览器本地完成视线计算
+- 支持 50%～1000% 的画布缩放
 
-## Local preview
+## 本地运行
 
-Serve this directory with any static HTTP server, then open its root page.
-Opening `index.html` directly from disk is not supported because browsers
-restrict local JSON module requests.
+请使用任意静态 HTTP 服务器托管本目录，然后访问网站根目录。由于浏览器会限制本地 JSON 模块请求，不支持直接双击打开 `index.html`。
 
-## Tests
+## 测试
 
-With Node.js installed:
+安装 Node.js 后运行：
 
 ```sh
 npm test
 ```
 
-## Deployment
+## 部署
 
-Every push to `main` runs the test suite and deploys this directory through
-the GitHub Pages workflow in `.github/workflows/deploy-pages.yml`.
+每次向 `main` 分支推送代码时，GitHub Actions 都会运行测试，并通过 `.github/workflows/deploy-pages.yml` 部署到 GitHub Pages。
 
-## Notice
+## 声明
 
-This is an unofficial community project. It is not affiliated with or
-endorsed by Mythic Games, Ubisoft, or the operators of 6siege.com. Game names,
-map artwork, and other third-party materials remain the property of their
-respective owners. Review the redistribution rights for third-party assets
-before publishing or licensing this repository.
+本项目为非官方、自用的社区项目，与 Mythic Games、Ubisoft 及 6siege.com 的运营者无隶属或背书关系。游戏名称、地图图片及其他第三方素材的权利归各自权利人所有。
