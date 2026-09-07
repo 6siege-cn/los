@@ -59,3 +59,9 @@ test("the standalone line-of-sight title panel is not rendered", () => {
   assert.doesNotMatch(html, /class="tactical-header"/);
   assert.doesNotMatch(html, /class="tactical-header-decoration"/);
 });
+
+test("header branding and footer contact details are present", () => {
+  assert.match(html, /<h1>《彩虹六号：围攻》桌游<\/h1>/);
+  assert.match(html, /<p>QQ群：793079480<\/p>/);
+  assert.doesNotMatch(html, /<h1>进阶工具<\/h1>/);
+});
