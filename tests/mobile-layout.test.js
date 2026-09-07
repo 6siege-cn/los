@@ -48,3 +48,8 @@ test("visible interface copy is localized in Simplified Chinese", () => {
   assert.match(app, /视线：可见/);
   assert.match(app, /杜斯妥也夫斯基咖啡馆/);
 });
+
+test("the line-of-sight rules panel is not rendered", () => {
+  assert.doesNotMatch(html, /视线规则/);
+  assert.doesNotMatch(html, /class="tactical-list"/);
+});
