@@ -65,3 +65,13 @@ test("header branding and footer contact details are present", () => {
   assert.match(html, /<p>QQ群：793079480<\/p>/);
   assert.doesNotMatch(html, /<h1>进阶工具<\/h1>/);
 });
+
+test("operator selection is reserved beside the active sight tab", () => {
+  assert.match(
+    html,
+    /active-nav-link[^>]*>视线测量<\/a>[\s\S]*nav-placeholder[^>]*>[\s\S]*干员选择/,
+  );
+  assert.match(html, /nav-placeholder[^>]*aria-disabled="true"/);
+  assert.match(css, /\.hidden-nav \.nav-placeholder/);
+  assert.match(css, /\.hidden-nav ul\s*\{[^}]*flex-direction: row/s);
+});
