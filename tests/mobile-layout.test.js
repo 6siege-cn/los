@@ -53,3 +53,9 @@ test("the line-of-sight rules panel is not rendered", () => {
   assert.doesNotMatch(html, /视线规则/);
   assert.doesNotMatch(html, /class="tactical-list"/);
 });
+
+test("the standalone line-of-sight title panel is not rendered", () => {
+  assert.doesNotMatch(html, /id="page-title"/);
+  assert.doesNotMatch(html, /class="tactical-header"/);
+  assert.doesNotMatch(html, /class="tactical-header-decoration"/);
+});

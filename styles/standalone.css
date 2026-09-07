@@ -35,10 +35,6 @@
   background: rgba(33, 150, 243, 0.08);
 }
 
-.tactical-header-title {
-  font-family: Roboto, Arial, sans-serif;
-}
-
 .tactical-panel-body {
   padding: 20px;
 }
@@ -243,23 +239,6 @@
   .hidden-content {
     padding: 16px 10px;
     overflow: visible;
-  }
-
-  .tactical-header {
-    margin-bottom: 22px;
-  }
-
-  .tactical-header-title-wrapper,
-  .tactical-header-title {
-    height: auto;
-    max-height: none;
-  }
-
-  .tactical-header-title {
-    display: block;
-    font-size: 22px;
-    line-height: 1.2;
-    letter-spacing: 1px;
   }
 
   .tactical-panel {
