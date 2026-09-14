@@ -1,5 +1,5 @@
-import operators from '../data/operators.js';
-import {assets,settings} from './config.js';
+import operators from '../data/operators.js?v=overview-audit-2';
+import {assets,settings} from './config.js?v=20260914.3';
 import {rules,actions} from './rules.js';
 import {createDraft} from './engine.js';
 import {operatorFamily,versionLabel} from './identity.js';
