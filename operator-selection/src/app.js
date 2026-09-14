@@ -1,8 +1,9 @@
 import operators from '../data/operators.js?v=overview-audit-2';
-import {assets,settings} from './config.js?v=20260914.3';
+import {assets,settings} from './config.js?v=314fc524c626546c';
 import {rules,actions} from './rules.js';
 import {createDraft} from './engine.js';
 import {operatorFamily,versionLabel} from './identity.js';
+import {startImageCache} from './image-cache.js';
 const rule=rules[settings.rule], draft=createDraft(rule,operators), byId=new Map(operators.map(op=>[op.id,op]));
 const board=document.querySelector('.operator-board');
 let activeSide='attack';
@@ -14,9 +15,9 @@ function icon(key) {
   el.style.setProperty('--icon-url', 'url("'+assets.icons[key].url+'")');
   el.style.transform='rotate('+assets.icons[key].rotation+'deg)';return el;
 }
-function picture(src,alt,className='') {const img=node('img',className);img.src=src;img.alt=alt;img.draggable=false;return img;}
+function picture(src,alt,className='') {const img=node('img',className);img.decoding='async';img.src=src;img.alt=alt;img.draggable=false;return img;}
 function displayName(op){return op.name+(versionLabel(op)?'（'+versionLabel(op)+'）':'');}
-function avatar(op){return picture(new URL(op.avatar,assets.avatarBase).href,displayName(op),'avatar');}
+function avatar(op){return picture(assets.avatarURL(op.avatar),displayName(op),'avatar');}
 function appendVersion(el,op){if(versionLabel(op))el.append(node('span','variant',versionLabel(op)));}
 function token(key){if(!assets.tokens[key])throw Error('未知素材 '+key);return picture(assets.tokens[key],key,'token');}
 function card(op) {
@@ -33,7 +34,7 @@ function renderTeam(side,state){
   for(let i=0;i<rule.teamSize;i++){
     const op=byId.get(state.picks[side][i]),row=node('article','team-row'),slot=node('div','operator-slot');
     if(op){slot.append(avatar(op));appendVersion(slot,op);slot.title=displayName(op); // The CSV owns the panel source.
-      const link=node('a','panel-link');link.href=new URL(op.panel,assets.panelBase).href;link.target='_blank';link.rel='noopener';link.title='查看 '+op.name+' 干员面板';link.setAttribute('aria-label',link.title);link.append(slot);row.append(link);
+      const link=node('a','panel-link');link.href=assets.panelURL(op.panel);link.target='_blank';link.rel='noopener';link.title='查看 '+op.name+' 干员面板';link.setAttribute('aria-label',link.title);link.append(slot);row.append(link);
     } else row.append(slot);
     row.append(card(op));list.append(row);
   }
@@ -79,3 +80,5 @@ function render(){
   undo.disabled=!state.history.length;renderGrid(state);
 }
 render();
+if(document.readyState==='complete')startImageCache();
+else window.addEventListener('load',startImageCache,{once:true});

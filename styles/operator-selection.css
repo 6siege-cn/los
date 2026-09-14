@@ -183,9 +183,11 @@
 }
 
 .weapon-grid {
+  min-width: 0;
+  min-height: 0;
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: repeat(3, 1fr);
+  grid-template-rows: repeat(3, minmax(0, 1fr));
   gap: 3px;
   padding-right: 3px;
 }
@@ -199,8 +201,9 @@
 }
 
 .stat-column {
+  min-height: 0;
   display: grid;
-  grid-template-rows: repeat(2, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: 4px;
   padding-left: 4px;
   border-left: 1px solid var(--line);
@@ -310,6 +313,11 @@
 .dice-row, .stat-slot { min-width:0; min-height:0; display:flex; align-items:center; justify-content:center; gap:0; background:var(--panel-soft); }
 .dice-row .token { position:relative; flex:0 0 27%; width:27%; height:100%; object-fit:contain; }
 .dice-row .token + .token { margin-left:-4.5%; }
+@supports (container-type: size) {
+  .dice-row { container-type:size; }
+  .dice-row .token { --dice-width:min(27cqw, 112cqh); flex-basis:var(--dice-width); width:var(--dice-width); }
+  .dice-row .token + .token { margin-left:calc(min(27cqw, 112cqh) / -6); }
+}
 .stat-slot .token { width:100%; height:100%; object-fit:contain; }
 .sequence-track .ui-icon { width:14px; height:14px; }
 .sequence-track li { color:var(--owner-color); opacity:.35; }
