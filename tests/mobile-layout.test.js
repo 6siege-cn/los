@@ -8,6 +8,10 @@ const css = readFileSync(
   "utf8",
 );
 const app = readFileSync(new URL("../scripts/app.js", import.meta.url), "utf8");
+const operatorCss = readFileSync(
+  new URL("../styles/operator-selection.css", import.meta.url),
+  "utf8",
+);
 
 test("page declares a mobile viewport and mobile map guidance", () => {
   assert.match(html, /name="viewport"/);
@@ -66,12 +70,29 @@ test("header branding and footer contact details are present", () => {
   assert.doesNotMatch(html, /<h1>进阶工具<\/h1>/);
 });
 
-test("operator selection is reserved beside the active sight tab", () => {
+test("operator selection is linked beside the active sight tab", () => {
   assert.match(
     html,
-    /active-nav-link[^>]*>视线测量<\/a>[\s\S]*nav-placeholder[^>]*>[\s\S]*干员选择/,
+    /active-nav-link[^>]*>视线测量<\/a>[\s\S]*href="\.\/operator-selection\/index\.html"[^>]*>干员选择<\/a>/,
   );
-  assert.match(html, /nav-placeholder[^>]*aria-disabled="true"/);
-  assert.match(css, /\.hidden-nav \.nav-placeholder/);
+  assert.doesNotMatch(html, /nav-placeholder[^>]*aria-disabled="true"/);
   assert.match(css, /\.hidden-nav ul\s*\{[^}]*flex-direction: row/s);
+});
+
+test("operator grid keeps exactly ten square portraits per row", () => {
+  assert.match(
+    operatorCss,
+    /\.operator-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(10,\s*minmax\(0,\s*1fr\)\)/,
+  );
+  assert.match(operatorCss, /\.operator-button\s*\{[^}]*aspect-ratio:\s*1/s);
+  assert.doesNotMatch(
+    operatorCss,
+    /\.operator-grid\s*\{\s*grid-template-columns:\s*repeat\(auto-fill/m,
+  );
+});
+
+test("weapon dice overlap from left to right while the group stays centered", () => {
+  assert.match(operatorCss, /\.dice-row, \.stat-slot\s*\{[^}]*justify-content:center[^}]*gap:0/s);
+  assert.match(operatorCss, /\.dice-row \.token\s*\{[^}]*position:relative[^}]*flex:0 0 27%/s);
+  assert.match(operatorCss, /\.dice-row \.token \+ \.token\s*\{[^}]*margin-left:-4\.5%/s);
 });

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="《彩虹六号：围攻》桌游干员选择工具"
+    />
+    <title>彩虹六号：围攻 — 干员选择</title>
+    <link rel="stylesheet" href="../styles/base.css" />
+    <link rel="stylesheet" href="../styles/standalone.css?v=20260907.2" />
+    <link rel="stylesheet" href="../styles/operator-selection.css?v=20260914.2" />
+    <script type="module" src="./src/app.js"></script>
+  </head>
+  <body>
+    <div class="hidden-layout operator-selection-page">
+      <header class="hidden-header">
+        <div class="header-logo">
+          <div class="r6-logo" aria-hidden="true">6S</div>
+          <h1>《彩虹六号：围攻》桌游</h1>
+        </div>
+        <div class="standalone-badge">干员选择 · 标准规则</div>
+      </header>
+
+      <nav class="hidden-nav" aria-label="工具导航">
+        <ul>
+          <li><a href="../index.html">视线测量</a></li>
+          <li><a class="active-nav-link" href="./index.html">干员选择</a></li>
+          <li><a href="../chess-clock/index.html">棋钟</a></li>
+        </ul>
+      </nav>
+
+      <main class="hidden-content operator-selection-content">
+        <section class="operator-board" aria-label="干员 Ban 与 Pick 布局框架">
+        <header class="ban-region region-frame">
+          <div class="ban-side ban-side--attack">
+            <div class="ban-slots" aria-label="进攻方 Ban 占位">
+              <span></span><span></span>
+            </div>
+          </div>
+
+          <div class="phase-block">
+            <span class="eyebrow">当前阶段</span>
+            <strong>BAN &amp; PICK</strong>
+            <span class="timer-placeholder">--:--</span>
+          </div>
+
+          <div class="ban-side ban-side--defense">
+            <div class="ban-slots" aria-label="防守方 Ban 占位">
+              <span></span><span></span>
+            </div>
+          </div>
+        </header>
+
+        <section class="selection-region">
+          <aside class="team-column team-column--attack" aria-label="进攻方阵容">
+            <div class="team-list">
+              <article class="team-row">
+                <div class="operator-slot" role="img" aria-label="已选择干员头像占位"></div>
+                <div class="info-card"><div class="weapon-grid"><i></i><i></i><i></i></div><div class="stat-column"><i></i><i></i></div></div>
+              </article>
+              <article class="team-row">
+                <div class="operator-slot" role="img" aria-label="已选择干员头像占位"></div>
+                <div class="info-card"><div class="weapon-grid"><i></i><i></i><i></i></div><div class="stat-column"><i></i><i></i></div></div>
+              </article>
+              <article class="team-row">
+                <div class="operator-slot" role="img" aria-label="已选择干员头像占位"></div>
+                <div class="info-card"><div class="weapon-grid"><i></i><i></i><i></i></div><div class="stat-column"><i></i><i></i></div></div>
+              </article>
+              <article class="team-row">
+                <div class="operator-slot" role="img" aria-label="已选择干员头像占位"></div>
+                <div class="info-card"><div class="weapon-grid"><i></i><i></i><i></i></div><div class="stat-column"><i></i><i></i></div></div>
+              </article>
+              <article class="team-row">
+                <div class="operator-slot" role="img" aria-label="已选择干员头像占位"></div>
+                <div class="info-card"><div class="weapon-grid"><i></i><i></i><i></i></div><div class="stat-column"><i></i><i></i></div></div>
+              </article>
+            </div>
+          </aside>
+
+          <section class="operator-pool region-frame" aria-label="干员选择矩阵">
+            <div class="operator-grid" aria-label="干员格占位">
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </section>
+
+          <aside class="team-column team-column--defense" aria-label="防守方阵容">
+            <div class="team-list">
+              <article class="team-row">
+                <div class="operator-slot" role="img" aria-label="已选择干员头像占位"></div>
+                <div class="info-card"><div class="weapon-grid"><i></i><i></i><i></i></div><div class="stat-column"><i></i><i></i></div></div>
+              </article>
+              <article class="team-row">
+                <div class="operator-slot" role="img" aria-label="已选择干员头像占位"></div>
+                <div class="info-card"><div class="weapon-grid"><i></i><i></i><i></i></div><div class="stat-column"><i></i><i></i></div></div>
+              </article>
+              <article class="team-row">
+                <div class="operator-slot" role="img" aria-label="已选择干员头像占位"></div>
+                <div class="info-card"><div class="weapon-grid"><i></i><i></i><i></i></div><div class="stat-column"><i></i><i></i></div></div>
+              </article>
+              <article class="team-row">
+                <div class="operator-slot" role="img" aria-label="已选择干员头像占位"></div>
+                <div class="info-card"><div class="weapon-grid"><i></i><i></i><i></i></div><div class="stat-column"><i></i><i></i></div></div>
+              </article>
+              <article class="team-row">
+                <div class="operator-slot" role="img" aria-label="已选择干员头像占位"></div>
+                <div class="info-card"><div class="weapon-grid"><i></i><i></i><i></i></div><div class="stat-column"><i></i><i></i></div></div>
+              </article>
+            </div>
+          </aside>
+        </section>
+
+        <footer class="sequence-region region-frame">
+          <ol class="sequence-track">
+            <li aria-label="行动步骤占位"></li><li aria-label="行动步骤占位"></li><li aria-label="行动步骤占位"></li><li aria-label="行动步骤占位"></li><li aria-label="行动步骤占位"></li>
+            <li aria-label="行动步骤占位"></li><li aria-label="行动步骤占位"></li><li aria-label="行动步骤占位"></li><li aria-label="行动步骤占位"></li><li aria-label="行动步骤占位"></li>
+          </ol>
+        </footer>
+        </section>
+      </main>
+
+      <footer class="hidden-footer">
+        <div class="footer-content">
+          <div class="footer-logo">6S</div>
+          <p>QQ群：793079480</p>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
