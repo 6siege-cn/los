@@ -7,6 +7,7 @@ import {startImageCache} from './image-cache.js';
 import {fitCatalogue} from './responsive-grid.js';
 import {fitDetails} from './compact-details.js';
 import {defaultScope,inScope} from './operator-scope.js';
+import {sortOperators} from './operator-order.js';
 import {installSkillPreview} from './skill-preview.js?v=native-menu-2';
 let scope={...defaultScope};
 const availableOperators=()=>operators.filter(op=>inScope(op,scope));
@@ -67,7 +68,7 @@ function switchSide(side){scroll[activeSide]=grid.scrollTop;activeSide=side;rend
 function renderGrid(state){
   for(const b of tabs){const selected=b.dataset.side===activeSide;b.setAttribute('aria-pressed',String(selected));}
   grid.setAttribute('aria-labelledby','tab-'+activeSide);grid.replaceChildren();
-  for(const op of availableOperators().filter(op=>op.side===activeSide)){
+  for(const op of sortOperators(availableOperators().filter(op=>op.side===activeSide))){
     const event=state.history.find(e=>operatorFamily(byId.get(e.operatorId))===operatorFamily(op)),button=node('button','operator-button');
     button.type='button';button.dataset.operatorId=op.id;button.dataset.skillId=op.id;button.setAttribute('aria-description','长按或按 F1 查看技能');button.append(avatar(op));
     const name=displayName(op),otherVersion=event&&event.operatorId!==op.id&&event.type==='pick';button.title=name;

@@ -7,6 +7,8 @@ import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import manifest from '../operator-selection/src/asset-manifest.js';
 import {checkSkillPreview} from './check-skill-preview.mjs';
+import operators from '../operator-selection/data/operators.js';
+import {sortOperators} from '../operator-selection/src/operator-order.js';
 const require=createRequire(import.meta.url);
 let chromium;
 try{({chromium}=require('playwright'));}
@@ -36,6 +38,10 @@ try{
   const coreCount=new Set([...Object.values(manifest.avatars),...Object.values(manifest.tokens),...Object.values(manifest.icons)]).size;
   const base=origin+'/los/operator-selection/';
   await page.goto(base+'index.html');
+  for(const side of ['defense','attack']){
+    await page.locator('#tab-'+side).click();
+    assert.deepEqual(await page.locator('.operator-button').evaluateAll(buttons=>buttons.map(b=>b.dataset.operatorId)),sortOperators(operators.filter(op=>op.side===side)).map(op=>op.id));
+  }
   assert.equal(await page.locator('.side-tabs,.side-tab').count(),0);
   await page.locator('#tab-defense').click();
   assert.equal(await page.locator('#tab-defense').getAttribute('aria-pressed'),'true');
