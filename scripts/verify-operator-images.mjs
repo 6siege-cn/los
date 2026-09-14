@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import manifest from '../operator-selection/src/asset-manifest.js';
 import {checkSkillPreview} from './check-skill-preview.mjs';
 import {checkDraftStorage} from './check-draft-storage.mjs';
+import {checkMatchRecords} from './check-match-records.mjs';
 import operators from '../operator-selection/data/operators.js';
 import {sortOperators} from '../operator-selection/src/operator-order.js';
 const require=createRequire(import.meta.url);
@@ -45,6 +46,8 @@ try{
   const base=origin+'/los/operator-selection/';
   await page.goto(base+'index.html');
   await page.locator('.menu-button').click();
+  assert.equal(await page.locator('.match-save-entry').isDisabled(),true);
+  await page.getByRole('button',{name:'关闭对局记录',exact:true}).click();
   assert.equal(await page.locator('dialog[open]').count(),0);
   assert.equal(await page.locator('.phase-tools select').count(),0);
   for(const side of ['defense','attack']){
@@ -241,4 +244,5 @@ try{
   await checkDraftStorage(page);
   assert.deepEqual(errors,[]);
   console.log('Draft persistence: refresh, undo, settings, reset, conflicts and corrupt records passed.');
+  await checkMatchRecords(page,output);
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

@@ -2,6 +2,7 @@ const base = new URL('../', import.meta.url);
 import manifest from './asset-manifest.js?v=d035f7e5720d0198';
 const resolve=path=>new URL(path,base).href;
 export const assets = {
+  recordMarks:Object.fromEntries(['thumbs-up','thumbs-down','skull','crosshair'].map(key=>[key,resolve('assets/icons/record-'+key+'.svg?v=1')])),
   avatarBase: new URL('assets/operators/badges/', base),
   panelBase: new URL('assets/operators/中文干员面板26.9.4/', base),
   avatarURL: file=>resolve(manifest.avatars[file]),

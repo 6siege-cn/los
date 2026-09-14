@@ -1,5 +1,5 @@
 import operators from '../data/operators.js?v=recruit-correction-1';
-import {assets,settings} from './config.js?v=faction-colors-1';
+import {assets,settings} from './config.js?v=match-records-1';
 import {rules,actions} from './rules.js?v=five-ban-1';
 import {createDraft} from './engine.js';
 import {operatorFamily,versionLabel} from './identity.js';
@@ -10,6 +10,7 @@ import {defaultScope,inScope} from './operator-scope.js';
 import {sortOperators,orderModes,defaultOrder} from './operator-order.js?v=unified-settings-1';
 import {installSkillPreview} from './skill-preview.js?v=native-menu-2';
 import {storageKey,captureDraft,restoreDraft,createDraftStorage} from './draft-storage.js';
+import {installMatchRecords} from './match-ui.js';
 let scope={...defaultScope};
 let orderMode=defaultOrder;
 const availableOperators=()=>operators.filter(op=>inScope(op,scope));
@@ -123,7 +124,7 @@ function renderGrid(state){
 const footer=document.querySelector('.sequence-region');footer.replaceChildren();
 const track=node('ol','sequence-track'),undo=node('button','undo-button');undo.type='button';undo.append(icon('undo'));undo.title='撤回';undo.addEventListener('click',()=>{const last=draft.snapshot().history.at(-1);if(draft.undo()){activeSide=last.target;render();}});footer.append(track);
 const phase=document.querySelector('.phase-block');phase.setAttribute('aria-live','polite');
-const menuButton=node('button','menu-button');menuButton.type='button';menuButton.setAttribute('aria-label','菜单（暂未开放）');menuButton.title='暂未开放';menuButton.append(icon('rules'));
+const menuButton=node('button','menu-button');menuButton.type='button';menuButton.setAttribute('aria-label','对局记录');menuButton.title='对局记录';menuButton.append(icon('rules'));
 const ruleSelect=node('select','rule-select settings-select');
 ruleSelect.setAttribute('aria-label','选择生效规则');
 for(const [id,value] of Object.entries(rules)){const option=node('option','',value.name);option.value=id;ruleSelect.append(option);}
@@ -189,6 +190,7 @@ const restoredReady=saveReady;saveReady=false;
 render();
 saveReady=restoredReady;
 installSkillPreview(board,{byId,avatarURL:assets.avatarURL});
+installMatchRecords(menuButton,{assets,getCurrent:()=>({state:draft.snapshot(),ruleId,rule,scope,orderMode,operators})});
 fitDetails(document.querySelector('.selection-region'));
 fitCatalogue(grid);
 if(document.readyState==='complete')startImageCache();

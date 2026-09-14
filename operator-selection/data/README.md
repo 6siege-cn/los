@@ -1,5 +1,20 @@
 # Operator selection data
 
+## 历史对局
+
+三横杠打开本机对局菜单。保存入口仅在十名干员选禁完成时启用，历史浏览始终可用。
+独立 IndexedDB 数据库 `six-siege-los-match-records` 的 `matches` 保存不可变对局快照：
+版本、UUID、保存时间、规则定义、范围、排序模式、完整有序操作历史、双方选/禁名单、
+引用到的干员数据、获胜方、结束方式、结束回合、每个已选干员的单个标记及标签。
+`tags` 同事务保存去重标签库；规范空白、全半角和大小写后去重，单标签最多24字符，每局最多20个。
+UUID 插入防止重复提交，独立记录追加与数据库事务避免不同页面互相覆盖。
+重置当前选禁或更新当前干员数据，不会删除已存对局或改变其中的姓名/版本/操作历史。
+
+记录和标签只在当前浏览器有效，不上传服务器。存储失败明确提示，表单留在原处；
+用户清理网站数据会清除数据库。下载按钮基于同一快照生成完整1200px宽 PNG，
+不截取可视区域，包含所有选禁历史。图片加载失败会提示重试，不输出缺失素材的图片。
+四个原创线条标记位于 `assets/icons/record-*.svg`，引用集中于 `config.js` 的 `assets.recordMarks`。
+
 This directory is reserved for structured data used by the new tab, including
 operator metadata, weapon tokens, health and breach values, team selections,
 and the Ban & Pick action sequence.
