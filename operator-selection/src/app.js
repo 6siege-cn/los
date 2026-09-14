@@ -1,4 +1,4 @@
-import operators from '../data/operators.js?v=expected-damage-1';
+import operators from '../data/operators.js?v=recruit-correction-1';
 import {assets,settings} from './config.js?v=faction-colors-1';
 import {rules,actions} from './rules.js?v=five-ban-1';
 import {createDraft} from './engine.js';
@@ -7,7 +7,7 @@ import {startImageCache} from './image-cache.js';
 import {fitCatalogue} from './responsive-grid.js';
 import {fitDetails} from './compact-details.js';
 import {defaultScope,inScope} from './operator-scope.js';
-import {sortOperators} from './operator-order.js';
+import {sortOperators} from './operator-order.js?v=recruit-correction-1';
 import {installSkillPreview} from './skill-preview.js?v=native-menu-2';
 let scope={...defaultScope};
 const availableOperators=()=>operators.filter(op=>inScope(op,scope));

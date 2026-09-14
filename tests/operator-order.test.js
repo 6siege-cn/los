@@ -3,18 +3,19 @@ import assert from 'node:assert/strict';
 import operators from '../operator-selection/data/operators.js';
 import {sortOperators} from '../operator-selection/src/operator-order.js';
 const op=(id,version,hp,totalExpectedDamage)=>({id,name:id,version,hp:'health_'+hp,totalExpectedDamage,closeExpectedDamage:0,mediumExpectedDamage:0,longExpectedDamage:0});
-test('health ascending and damage descending, irrespective of recruit or version',()=>{
+test('health first, recruits last within equal health, then damage irrespective of version',()=>{
   const source=[op('recruit_attack_1','off',1,99),op('diy','diy',1,99),op('alt','alt',1,99),op('healthy','off',6,99),op('low','off',4,10),op('high','off',4,15.5),op('tie','off',4,15.5)];
   const before=structuredClone(source);
-  assert.deepEqual(sortOperators(source).map(op=>op.id),['recruit_attack_1','diy','alt','high','tie','low','healthy']);
+  assert.deepEqual(sortOperators(source).map(op=>op.id),['diy','alt','recruit_attack_1','high','tie','low','healthy']);
+  assert.deepEqual(sortOperators([op('recruit_defense_1','off',4,99),op('normal','off',4,1),op('higher_hp','off',5,99)]).map(op=>op.id),['normal','recruit_defense_1','higher_hp']);
   assert.deepEqual(source,before);
 });
-test('actual rosters retain every entry and obey all five priorities',()=>{
+test('actual rosters retain every entry and obey all six priorities',()=>{
   for(const side of ['attack','defense']){
     const source=operators.filter(op=>op.side===side),sorted=sortOperators(source);
     assert.equal(sorted.length,source.length);
     assert.deepEqual(new Set(sorted.map(op=>op.id)),new Set(source.map(op=>op.id)));
-    const rank=op=>[Number(op.hp.split('_')[1]),-op.totalExpectedDamage,-op.closeExpectedDamage,-op.mediumExpectedDamage,-op.longExpectedDamage];
+    const rank=op=>[Number(op.hp.split('_')[1]),Number(op.name==='RECRUIT'),-op.totalExpectedDamage,-op.closeExpectedDamage,-op.mediumExpectedDamage,-op.longExpectedDamage];
     for(let i=1;i<sorted.length;i++){
       const a=rank(sorted[i-1]),b=rank(sorted[i]);
       const differing=a.findIndex((value,k)=>value!==b[k]);
