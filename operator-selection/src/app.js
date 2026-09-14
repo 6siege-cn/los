@@ -151,7 +151,7 @@ for(const key of Object.keys(defaultScope)){
     scope[key]=input.checked;restart(ruleId);
   });
 }
-const orderSection=settingSection('干员顺序','速度/枪械按数值排序；时间按指定名单，同名 OFF → ALT → DIY。');
+const orderSection=settingSection('干员顺序','速度/枪械按数值排序；时间按干员推出时间排序');
 const orderSelect=node('select','order-select settings-select');orderSelect.setAttribute('aria-label','干员顺序');
 for(const [id,label] of Object.entries(orderModes)){const option=node('option','',label);option.value=id;orderSelect.append(option);}
 orderSection.append(orderSelect);
