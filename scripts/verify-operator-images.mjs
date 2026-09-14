@@ -78,25 +78,55 @@ try{
   for(let i=0;i<13;i++)await page.locator('.operator-button:not(:disabled)').first().click();
   assert.equal(await page.locator('.panel-link').count(),10);
   const layouts=[];
-  for(const [width,height] of [[320,568],[360,640],[390,844],[430,932],[768,1024],[820,1180],[1024,768],[1366,768],[1440,900],[1920,1080],[844,390],[667,375]]){
+  for(const [width,height] of [[320,568],[360,640],[390,844],[430,932],[768,1024],[820,1180],[1024,768],[1366,768],[1440,900],[1920,1080],[844,390],[667,375],[844,320],[800,300],[667,300],[960,360]]){
     await page.setViewportSize({width,height});
     const metrics=await page.evaluate(()=>{
       const rect=s=>document.querySelector(s).getBoundingClientRect();
       const squares=[...document.querySelectorAll('.operator-button,.operator-slot,.ban-slot')].map(el=>el.getBoundingClientRect());
-      return {bottom:rect('.sequence-region').bottom,top:rect('.ban-region').top,overflow:document.documentElement.scrollWidth>innerWidth,
+      return {bottom:rect('.sequence-region').bottom,top:rect('.ban-region').top,overflow:document.documentElement.scrollWidth>innerWidth||document.documentElement.scrollHeight>innerHeight,navTop:rect('.hidden-nav').top,
         matrix:rect('.operator-button').width,selected:rect('.operator-slot').width,
         square:squares.every(r=>Math.abs(r.width-r.height)<1),
         teams:[...document.querySelectorAll('.panel-link')].every(el=>{const r=el.getBoundingClientRect();return r.top>=rect('.ban-region').bottom&&r.bottom<=rect('.sequence-region').top;}),
         gridHeight:rect('.operator-grid').height};
     });
+    assert.equal(await page.evaluate(()=>{
+      const rule=document.querySelector('.phase-tools').getBoundingClientRect(),actions=document.querySelector('.phase-actions').getBoundingClientRect();
+      const phase=document.querySelector('.phase-block').getBoundingClientRect();
+      return Math.abs(rule.width-actions.width)<1&&actions.right<=phase.left+1&&rule.left>=phase.right-1&&[...document.querySelector('.phase-block').children].every(el=>{const r=el.getBoundingClientRect();return r.top>=phase.top&&r.bottom<=phase.bottom+1;});
+    }),true,`Symmetric controls and phase text must fit at ${width}x${height}`);
     assert.ok(metrics.bottom<=height+1&&metrics.top>=0,JSON.stringify({width,height,...metrics}));
     assert.ok(!metrics.overflow&&metrics.square&&metrics.teams,JSON.stringify({width,height,...metrics}));
-    assert.ok(metrics.matrix>=63&&metrics.selected>=43&&metrics.gridHeight>=64,JSON.stringify({width,height,...metrics}));
+    assert.ok(metrics.matrix>=63&&metrics.selected>=(height<=370?28:43)&&metrics.gridHeight>=64,JSON.stringify({width,height,...metrics}));
     layouts.push({width,height,...metrics});
     if(output)await page.screenshot({path:join(output,`${width}x${height}.png`),fullPage:true});
+    if(height<=370){
+      assert.equal(await page.locator('.team-list').first().evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),1);
+      assert.equal(await page.locator('.team-row > .info-card').evaluateAll(cards=>cards.every(el=>getComputedStyle(el).display!=='none')),true);
+    }
   }
   for(let i=0;i<14;i++)await page.locator('.undo-button').click();
   assert.equal(await page.locator('.panel-link,.info-card img,.ban-slot img').count(),0);
+  assert.equal(await page.locator('.rule-select').isEnabled(),true);
+  await page.locator('.operator-button:not(:disabled)').first().click();
+  assert.equal(await page.locator('.rule-select').isDisabled(),true);
+  await page.locator('.reset-button').click();
+  assert.equal(await page.locator('.panel-link,.info-card img,.ban-slot img,.sequence-track .done').count(),0);
+  assert.equal(await page.locator('.undo-button').isDisabled(),true);
+  assert.equal(await page.locator('#tab-attack').getAttribute('aria-selected'),'true');
+  assert.equal(await page.locator('.rule-select').isEnabled(),true);
+  // Supply an additional rule only in this isolated test, exercising registry extension.
+  await page.route('**/rules.js',async route=>{
+    const response=await route.fetch();
+    await route.fulfill({response,body:await response.text()+`\nrules.fixture={...rules.standard,name:'测试规则',rounds:rules.standard.rounds.map(r=>({...r,side:opposite(r.side)}))};`});
+  });
+  await page.reload();
+  await page.locator('.rule-select').selectOption('fixture');
+  assert.ok((await page.locator('.phase-block').innerText()).includes('测试规则'));
+  assert.ok((await page.locator('.phase-block strong').innerText()).startsWith('防守方'));
+  await page.locator('.operator-button:not(:disabled)').first().click();
+  assert.equal(await page.locator('.rule-select').isDisabled(),true);
+  await page.locator('.reset-button').click();
+  assert.equal(await page.locator('.rule-select').inputValue(),'standard');
   assert.deepEqual(errors,[]);
   console.log(JSON.stringify({coreImages:coreCount,firstVisitNetworkRequests:firstRequests,repeatVisitImageDownloads:0,offlinePanel:true,offlineTokens:true,offlineFactionSwitch:true,layouts,pageErrors:errors}));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

@@ -316,7 +316,7 @@ body { margin:0; }
 .operator-selection-page .hidden-nav ul { flex-direction:row; max-width:none; }
 .operator-selection-page .hidden-nav li { max-width:none; }
 .operator-selection-page .hidden-nav a { min-height:44px; padding:8px; font-size:12px; }
-.operator-selection-content { max-width:none; padding:4px; min-height:0; overflow:visible; display:flex; }
+.operator-selection-content { max-width:none; padding:4px; min-height:0; overflow:visible; display:flex; flex:1 1 0; }
 .operator-board { height:100%; min-height:300px; padding:4px; grid-template-rows:56px minmax(0,1fr) 48px; }
 .selection-region { grid-template-columns:clamp(150px,21vw,300px) minmax(0,1fr) clamp(150px,21vw,300px); }
 .team-list { gap:4px; }
@@ -350,6 +350,20 @@ body { margin:0; }
   .team-column--attack .info-card { grid-template-columns:20px minmax(0,1fr); }
   .operator-grid { grid-template-columns:repeat(auto-fill,minmax(64px,1fr)); }
 }
+
+/* Five rows stay in one column, sized against their actual allocated height. */
+@media (max-height:370px) and (min-aspect-ratio:1/1) {
+  .operator-board { min-height:0; }
+  .selection-region { grid-template-columns:clamp(116px,17vw,190px) minmax(0,1fr) clamp(116px,17vw,190px); }
+  .team-column { min-height:0; }
+  .team-list { grid-template-columns:minmax(0,1fr); grid-template-rows:repeat(5,minmax(0,1fr)); }
+  .team-row, .team-column--defense .team-row { display:flex; gap:3px; min-width:0; container-type:size; }
+  .team-column--defense .team-row { flex-direction:row-reverse; }
+  .team-row > .info-card { flex:1; height:100%; }
+  .team-row > .operator-slot, .team-row > .panel-link { width:min(40cqw,100cqh); height:min(40cqw,100cqh); flex:none; }
+  .panel-link .operator-slot { height:100%; }
+  .operator-pool { padding:2px; gap:2px; }
+}
 @media (max-height:500px) and (min-aspect-ratio:1/1) {
   .operator-selection-content { padding:2px; }
   .operator-board { padding:2px; gap:2px; grid-template-rows:44px minmax(0,1fr) 44px; }
@@ -382,4 +396,32 @@ body { margin:0; }
   .sequence-track .ui-icon { width:10px; height:14px; }
   .undo-button { min-width:48px; width:48px; padding:0; font-size:0; gap:0; }
   .undo-button .ui-icon { width:24px; height:24px; }
+}
+
+/* Rule and session controls flank the current phase, not the round timeline. */
+.operator-board { grid-template-rows:56px minmax(0,1fr) 32px; }
+.ban-region { --action-size:48px; grid-template-columns:minmax(0,1fr) calc(2 * var(--action-size)) minmax(120px,180px) calc(2 * var(--action-size)) minmax(0,1fr); }
+.rule-control { position:relative; display:grid; place-items:center; min-width:0; font-size:11px; border-inline:1px solid var(--line); cursor:pointer; }
+.rule-select { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+.rule-control:focus-within { outline:2px solid white; outline-offset:-2px; }
+.rule-control.is-locked { opacity:.45; cursor:default; }
+.rule-select:disabled { cursor:default; }
+.phase-actions, .phase-tools { display:flex; align-items:center; min-width:0; }
+.phase-actions button, .phase-tools button, .phase-tools .rule-control { min-width:var(--action-size); width:var(--action-size); height:44px; padding:0; border-radius:0; display:grid; place-items:center; border:1px solid var(--line); background:var(--panel-soft); }
+.phase-actions .undo-button { flex-direction:column; gap:0; font-size:10px; }
+.phase-actions .undo-button .ui-icon { width:18px; height:18px; }
+.phase-actions .reset-button { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:0; font-size:10px; }
+.phase-actions .reset-button .ui-icon { width:18px; height:18px; }
+.phase-actions .undo-button .ui-icon, .phase-actions .reset-button .ui-icon, .phase-tools .ui-icon { width:24px; height:24px; }
+.settings-button:disabled { opacity:.45; }
+@media (max-height:500px) and (min-aspect-ratio:1/1) {
+  .operator-board { grid-template-rows:44px minmax(0,1fr) 32px; }
+}
+@media (max-width:600px) and (max-aspect-ratio:1/1) {
+  .operator-board { grid-template-rows:68px minmax(0,1fr) 32px; }
+  .ban-region { --action-size:clamp(44px,12vw,48px); grid-template-columns:28px calc(2 * var(--action-size)) minmax(0,1fr) calc(2 * var(--action-size)) 28px; }
+  .ban-side { padding:1px; justify-content:center; }
+  .ban-slots { flex-direction:column; gap:2px; }
+  .ban-slots span { width:22px; }
+  .phase-block strong { font-size:10px; }
 }

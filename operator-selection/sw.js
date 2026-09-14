@@ -1,5 +1,5 @@
 /* Cache only content-addressed images. HTML, scripts and game data stay network-backed. */
-importScripts('./cache-manifest.js?v=314fc524c626546c');
+importScripts('./cache-manifest.js?v=d035f7e5720d0198');
 const scope=self.registration.scope;
 const coreURLs=new Set(self.IMAGE_MANIFEST.core.map(path=>new URL(path,scope).href));
 const panelURLs=new Set(self.IMAGE_MANIFEST.panels.map(path=>new URL(path,scope).href));

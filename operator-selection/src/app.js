@@ -1,11 +1,12 @@
 import operators from '../data/operators.js?v=overview-audit-2';
-import {assets,settings} from './config.js?v=314fc524c626546c';
+import {assets,settings} from './config.js?v=d035f7e5720d0198';
 import {rules,actions} from './rules.js';
 import {createDraft} from './engine.js';
 import {operatorFamily,versionLabel} from './identity.js';
 import {startImageCache} from './image-cache.js';
 import {fitCatalogue} from './responsive-grid.js';
-const rule=rules[settings.rule], draft=createDraft(rule,operators), byId=new Map(operators.map(op=>[op.id,op]));
+let ruleId=settings.rule, rule=rules[ruleId], draft=createDraft(rule,operators);
+const byId=new Map(operators.map(op=>[op.id,op]));
 const board=document.querySelector('.operator-board');
 let activeSide='attack';
 const scroll={attack:0,defense:0};
@@ -71,10 +72,34 @@ function renderGrid(state){
   grid.scrollTop=scroll[activeSide];
 }
 const footer=document.querySelector('.sequence-region');footer.replaceChildren();
-const track=node('ol','sequence-track'),undo=node('button','undo-button');undo.type='button';undo.append(icon('undo'),document.createTextNode('撤回'));undo.addEventListener('click',()=>{const last=draft.snapshot().history.at(-1);if(draft.undo()){activeSide=last.target;render();}});footer.append(track,undo);
+const track=node('ol','sequence-track'),undo=node('button','undo-button');undo.type='button';undo.append(icon('undo'));undo.title='撤回';undo.addEventListener('click',()=>{const last=draft.snapshot().history.at(-1);if(draft.undo()){activeSide=last.target;render();}});footer.append(track);
 const phase=document.querySelector('.phase-block');phase.setAttribute('aria-live','polite');
+const ruleCell=node('label','rule-control'),ruleSelect=node('select','rule-select');
+ruleSelect.setAttribute('aria-label','选择生效规则');
+for(const [id,value] of Object.entries(rules)){const option=node('option','',value.name);option.value=id;ruleSelect.append(option);}
+ruleCell.append(icon('rules'),ruleSelect);
+const controls=node('div','phase-actions'),reset=node('button','reset-button');reset.type='button';reset.title='重置';
+reset.prepend(icon('reset'));
+undo.setAttribute('aria-label','撤回上一步');reset.setAttribute('aria-label','重置到初始状态');
+controls.append(undo,reset);phase.before(controls);
+const toolsCell=node('div','phase-tools'),settingsButton=node('button','settings-button');
+settingsButton.type='button';settingsButton.disabled=true;settingsButton.title='设置（暂未开放）';settingsButton.setAttribute('aria-label',settingsButton.title);settingsButton.append(icon('settings'));
+toolsCell.append(ruleCell,settingsButton);phase.after(toolsCell);
+function restart(id){
+  ruleId=id;rule=rules[id];draft=createDraft(rule,operators);
+  activeSide='attack';scroll.attack=0;scroll.defense=0;render();
+}
+ruleSelect.addEventListener('change',()=>{
+  if(draft.snapshot().history.length||!Object.hasOwn(rules,ruleSelect.value)){ruleSelect.value=ruleId;return;}
+  restart(ruleSelect.value);
+});
+reset.addEventListener('click',()=>restart(settings.rule));
 function render(){
   const state=draft.snapshot();for(const side of ['attack','defense'])renderTeam(side,state);
+  ruleSelect.value=ruleId;ruleSelect.disabled=state.history.length>0;
+  ruleCell.classList.toggle('is-locked',ruleSelect.disabled);
+  ruleCell.title=ruleSelect.disabled?'撤回全部操作或重置后可更换规则':'选择生效规则';
+  track.style.gridTemplateColumns=`repeat(${state.timeline.length},minmax(0,1fr))`;
   const tasks=[...new Set(state.available.map(s=>s.type))].map(type=>actions[type].label+' '+state.available.filter(s=>s.type===type).length);
   phase.replaceChildren(node('span','eyebrow',rule.name),node('strong','',state.step?sideName[state.step.side]+' · '+tasks.join(' / '):'选用完成'),node('span','timer-placeholder',state.step?'第 '+state.step.round+' / '+rule.rounds.length+' 轮 · 顺序不限':'5 对 5'));
   track.replaceChildren();state.timeline.forEach((step,i)=>{const current=i>=state.history.length&&step.round===state.step?.round;const li=node('li',i<state.history.length?'done':current?'current':'');li.style.setProperty('--owner-color',settings.colors[step.side]);li.title=sideName[step.side]+' '+actions[step.type].label+sideName[step.target];li.setAttribute('aria-label',li.title);if(current)li.setAttribute('aria-current','step');li.append(icon(step.type));track.append(li);});

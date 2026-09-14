@@ -1,5 +1,5 @@
 const base = new URL('../', import.meta.url);
-import manifest from './asset-manifest.js?v=314fc524c626546c';
+import manifest from './asset-manifest.js?v=d035f7e5720d0198';
 const resolve=path=>new URL(path,base).href;
 export const assets = {
   avatarBase: new URL('assets/operators/badges/', base),
@@ -10,7 +10,8 @@ export const assets = {
   icons: Object.fromEntries(Object.entries({
     attack:['crossed-pickaxes.png',180], defense:['ribbon-badge.png',180],
     pick:['medal-round-solid-alt.png',180], ban:['prohibited-large.png',180],
-    undo:['refresh-clockwise.png',180]
+    reset:['refresh-clockwise.png',180], undo:['undo-return.svg',0],
+    rules:['rules-menu.svg',0], settings:['settings-gear.svg',0]
   }).map(([key,[file,rotation]])=>[key,{url:resolve(manifest.icons[file]),rotation}]))
 };
 export const settings = { rule: 'standard', colors: {attack:'#d2a83c',defense:'#589dd1'} };

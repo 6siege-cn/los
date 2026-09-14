@@ -12,7 +12,7 @@ const root=new URL('../operator-selection/',import.meta.url);
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const operators=readOperators();
 const tokenKeys=[...new Set(operators.flatMap(op=>[op.hp,op.destruction,...op.close,...op.medium,...op.long]))];
-const iconNames=['crossed-pickaxes.png','ribbon-badge.png','medal-round-solid-alt.png','prohibited-large.png','refresh-clockwise.png'];
+const iconNames=['crossed-pickaxes.png','ribbon-badge.png','medal-round-solid-alt.png','prohibited-large.png','refresh-clockwise.png','undo-return.svg','rules-menu.svg','settings-gear.svg'];
 const manifest={revision:'',avatars:{},tokens:{},icons:{},panels:{},sources:[]};
 await mkdir(new URL('assets/optimized/',root),{recursive:true});
 async function add(group,key,source,maxSize){
