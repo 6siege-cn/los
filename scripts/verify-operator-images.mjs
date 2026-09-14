@@ -63,7 +63,7 @@ try{
   const output=process.argv[2];
   if(output){await mkdir(output,{recursive:true});await page.screenshot({path:join(output,'desktop.png'),fullPage:true});}
   await page.setViewportSize({width:390,height:844});
-  assert.equal(await page.locator('.operator-grid').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),10);
+  assert.ok(await page.locator('.operator-button').first().evaluate(el=>el.getBoundingClientRect().width>=64));
   assert.equal(await page.locator('.team-column--attack .info-card').first().evaluate(card=>{
     const bounds=card.getBoundingClientRect();
     return [...card.querySelectorAll('img')].every(img=>img.getBoundingClientRect().bottom<=bounds.bottom+1);
@@ -74,6 +74,29 @@ try{
     return dice.slice(1).every((b,i)=>b.left<dice[i].right)&&Math.abs((dice[0].left+dice.at(-1).right)/2-(bounds.left+bounds.right)/2)<1;
   }),true,'Dice must remain overlapped and centered on mobile');
   if(output)await page.screenshot({path:join(output,'mobile.png'),fullPage:true});
+  // Fill every pick/ban slot, then exercise all layouts with real rendered data.
+  for(let i=0;i<13;i++)await page.locator('.operator-button:not(:disabled)').first().click();
+  assert.equal(await page.locator('.panel-link').count(),10);
+  const layouts=[];
+  for(const [width,height] of [[320,568],[360,640],[390,844],[430,932],[768,1024],[820,1180],[1024,768],[1366,768],[1440,900],[1920,1080],[844,390],[667,375]]){
+    await page.setViewportSize({width,height});
+    const metrics=await page.evaluate(()=>{
+      const rect=s=>document.querySelector(s).getBoundingClientRect();
+      const squares=[...document.querySelectorAll('.operator-button,.operator-slot,.ban-slot')].map(el=>el.getBoundingClientRect());
+      return {bottom:rect('.sequence-region').bottom,top:rect('.ban-region').top,overflow:document.documentElement.scrollWidth>innerWidth,
+        matrix:rect('.operator-button').width,selected:rect('.operator-slot').width,
+        square:squares.every(r=>Math.abs(r.width-r.height)<1),
+        teams:[...document.querySelectorAll('.panel-link')].every(el=>{const r=el.getBoundingClientRect();return r.top>=rect('.ban-region').bottom&&r.bottom<=rect('.sequence-region').top;}),
+        gridHeight:rect('.operator-grid').height};
+    });
+    assert.ok(metrics.bottom<=height+1&&metrics.top>=0,JSON.stringify({width,height,...metrics}));
+    assert.ok(!metrics.overflow&&metrics.square&&metrics.teams,JSON.stringify({width,height,...metrics}));
+    assert.ok(metrics.matrix>=63&&metrics.selected>=43&&metrics.gridHeight>=64,JSON.stringify({width,height,...metrics}));
+    layouts.push({width,height,...metrics});
+    if(output)await page.screenshot({path:join(output,`${width}x${height}.png`),fullPage:true});
+  }
+  for(let i=0;i<14;i++)await page.locator('.undo-button').click();
+  assert.equal(await page.locator('.panel-link,.info-card img,.ban-slot img').count(),0);
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({coreImages:coreCount,firstVisitNetworkRequests:firstRequests,repeatVisitImageDownloads:0,offlinePanel:true,offlineTokens:true,offlineFactionSwitch:true,mobileColumns:10,pageErrors:errors}));
+  console.log(JSON.stringify({coreImages:coreCount,firstVisitNetworkRequests:firstRequests,repeatVisitImageDownloads:0,offlinePanel:true,offlineTokens:true,offlineFactionSwitch:true,layouts,pageErrors:errors}));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

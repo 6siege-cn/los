@@ -4,6 +4,7 @@ import {rules,actions} from './rules.js';
 import {createDraft} from './engine.js';
 import {operatorFamily,versionLabel} from './identity.js';
 import {startImageCache} from './image-cache.js';
+import {fitCatalogue} from './responsive-grid.js';
 const rule=rules[settings.rule], draft=createDraft(rule,operators), byId=new Map(operators.map(op=>[op.id,op]));
 const board=document.querySelector('.operator-board');
 let activeSide='attack';
@@ -80,5 +81,6 @@ function render(){
   undo.disabled=!state.history.length;renderGrid(state);
 }
 render();
+fitCatalogue(grid);
 if(document.readyState==='complete')startImageCache();
 else window.addEventListener('load',startImageCache,{once:true});

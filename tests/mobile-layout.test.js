@@ -79,16 +79,8 @@ test("operator selection is linked beside the active sight tab", () => {
   assert.match(css, /\.hidden-nav ul\s*\{[^}]*flex-direction: row/s);
 });
 
-test("operator grid keeps exactly ten square portraits per row", () => {
-  assert.match(
-    operatorCss,
-    /\.operator-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(10,\s*minmax\(0,\s*1fr\)\)/,
-  );
+test("operator portraits retain their square shape", () => {
   assert.match(operatorCss, /\.operator-button\s*\{[^}]*aspect-ratio:\s*1/s);
-  assert.doesNotMatch(
-    operatorCss,
-    /\.operator-grid\s*\{\s*grid-template-columns:\s*repeat\(auto-fill/m,
-  );
 });
 
 test("weapon dice overlap from left to right while the group stays centered", () => {
