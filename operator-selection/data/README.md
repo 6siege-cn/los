@@ -14,6 +14,8 @@ UUID 插入防止重复提交，独立记录追加与数据库事务避免不同
 用户清理网站数据会清除数据库。下载按钮基于同一快照生成完整1200px宽 PNG，
 不截取可视区域，包含所有选禁历史。图片加载失败会提示重试，不输出缺失素材的图片。
 四个原创线条标记位于 `assets/icons/record-*.svg`，引用集中于 `config.js` 的 `assets.recordMarks`。
+编辑对局时点击头像打开旁边的 2×2 标记浮层，点击当前已选标记取消，点击其他标记替换。
+点外部、Esc、滚动或离开编辑页会收起浮层，不使用额外的标记模态窗口。
 
 This directory is reserved for structured data used by the new tab, including
 operator metadata, weapon tokens, health and breach values, team selections,

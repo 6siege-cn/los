@@ -20,16 +20,32 @@ export async function checkMatchRecords(source,output){
     await page.getByRole('textbox',{name:'自定义标签',exact:true}).fill(' rush ');await page.getByRole('button',{name:'添加标签',exact:true}).tap();
     assert.equal(await page.locator('.match-card .match-tag').count(),2);
     const ids=await page.locator('[data-mark-id]').evaluateAll(nodes=>nodes.slice(0,4).map(n=>n.dataset.markId));
-    const cdp=await context.newCDPSession(page);
     for(const [i,label] of ['向上大拇指','向下大拇指','骷髅头','瞄准准星'].entries()){
-      const target=page.locator(`[data-mark-id="${ids[i]}"]`);await target.scrollIntoViewIfNeeded();const box=await target.boundingBox();
-      const point={x:box.x+box.width/2,y:box.y+box.width/2};
-      await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});await page.waitForTimeout(550);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+      const target=page.locator(`[data-mark-id="${ids[i]}"]`);await target.tap();
+      assert.equal(await page.locator('dialog[open]').count(),1);
+      assert.equal(await page.locator('.match-marker-popover button').count(),4);
+      assert.equal(await page.locator('.match-marker-popover').evaluate(node=>{const r=node.getBoundingClientRect();return r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight&&getComputedStyle(node).gridTemplateColumns.split(' ').length===2;}),true);
+      if(output&&i===0)await page.screenshot({path:join(output,'match-marker-popover-mobile.png')});
       await page.getByRole('button',{name:label,exact:true}).tap();
     }
     assert.equal(await page.locator('.match-card .match-mark').count(),4);
+    const lastPortrait=page.locator('[data-mark-id]').last();
+    await lastPortrait.tap();
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('.match-marker-popover').isVisible(),false);
+    assert.equal(await page.locator('.match-dialog').isVisible(),true);
+    await lastPortrait.tap();await lastPortrait.tap();
+    assert.equal(await page.locator('.match-marker-popover').isVisible(),false);
+    await lastPortrait.tap();await page.locator('.match-dialog-head h2').tap();
+    assert.equal(await page.locator('.match-marker-popover').isVisible(),false);
+    await page.setViewportSize({width:1366,height:900});await lastPortrait.click();
+    assert.equal(await page.locator('.match-marker-popover').evaluate(node=>{const r=node.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight;}),true);
+    if(output)await page.screenshot({path:join(output,'match-marker-popover-desktop.png')});
+    await page.keyboard.press('Escape');await page.setViewportSize({width:390,height:844});
     // Keyboard alternative and clear, then replace, do not trigger draft actions.
-    await page.locator(`[data-mark-id="${ids[0]}"]`).focus();await page.keyboard.press('Enter');await page.getByRole('button',{name:'清除标记',exact:true}).tap();
+    await page.locator(`[data-mark-id="${ids[0]}"]`).focus();await page.keyboard.press('Enter');
+    assert.equal(await page.getByRole('button',{name:'向上大拇指',exact:true}).getAttribute('aria-pressed'),'true');
+    await page.getByRole('button',{name:'向上大拇指',exact:true}).tap();
     assert.equal(await page.locator('.match-card .match-mark').count(),3);
     await page.locator(`[data-mark-id="${ids[0]}"]`).focus();await page.keyboard.press('Enter');await page.getByRole('button',{name:'向上大拇指',exact:true}).tap();
     assert.equal(await page.locator('.sequence-track .done').count(),14);

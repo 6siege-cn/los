@@ -4,7 +4,7 @@ const dateLabel=record=>new Date(record.savedAt).toLocaleString('zh-CN',{hour12:
 const resultLabel=record=>record.winner?`${sideLabels[record.winner]}获胜`:'待填写结果';
 export function portrait(op,record,assets,editable=false){
   const box=el(editable?'button':'div','match-portrait');
-  if(editable){box.type='button';box.dataset.markId=op.id;box.setAttribute('aria-label','标记 '+operatorLabel(op));box.title='长按或按 Enter 添加标记';}
+  if(editable){box.type='button';box.dataset.markId=op.id;box.setAttribute('aria-label','标记 '+operatorLabel(op));box.setAttribute('aria-expanded','false');box.title='点击选择标记，再次选择当前标记即可取消';}
   const face=el('span','match-face'),img=el('img');img.src=assets.avatarURL(op.avatar);img.alt=op.name;img.draggable=false;face.append(img);
   if(op.version!=='off')face.append(el('span','match-version',op.version.toUpperCase()));
   if(record.marks[op.id]){const mark=el('img','match-mark');mark.src=assets.recordMarks[record.marks[op.id]];mark.alt=marks[record.marks[op.id]];face.append(mark);}

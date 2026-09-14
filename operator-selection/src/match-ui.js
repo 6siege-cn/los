@@ -1,5 +1,5 @@
 import {createMatchStore,snapshotMatch,validateMatch,presetTags,uniqueTags,tagKey,marks,sideLabels,endings,endRounds,operatorLabel} from './match-records.js';
-import {el,renderMatchCard,matchPNG} from './match-card.js';
+import {el,renderMatchCard,matchPNG} from './match-card.js?v=mark-popover-1';
 export function installMatchRecords(menuButton,{getCurrent,assets}){
   const store=createMatchStore(globalThis.indexedDB);
   const dialog=el('dialog','match-dialog');dialog.id='match-records';dialog.setAttribute('aria-labelledby','match-dialog-title');
@@ -9,18 +9,19 @@ export function installMatchRecords(menuButton,{getCurrent,assets}){
   saveEntry.className='match-save-entry';nav.append(saveEntry,historyEntry);
   const status=el('p','match-status');status.setAttribute('role','status');
   const content=el('div','match-content');dialog.append(head,nav,status,content);document.body.append(dialog);
-  const markerDialog=el('dialog','match-marker-dialog');markerDialog.setAttribute('aria-label','选择干员标记');document.body.append(markerDialog);
-  let viewToken=0,editor=null,press=null;
+  const markerPopover=el('div','match-marker-popover');markerPopover.id='match-marker-popover';markerPopover.setAttribute('role','group');markerPopover.setAttribute('aria-label','选择干员标记');markerPopover.hidden=true;dialog.append(markerPopover);
+  if(typeof markerPopover.showPopover==='function')markerPopover.setAttribute('popover','manual');
+  let viewToken=0,editor=null,markAnchor=null;
   function button(label,action){const b=el('button','',label);b.type='button';b.addEventListener('click',action);return b;}
   function message(text){status.textContent=text;}
-  function changeView(label){viewToken++;editor=null;cancelPress();title.textContent=label;content.replaceChildren();message('');dialog.scrollTop=0;return viewToken;}
+  function changeView(label){viewToken++;editor=null;closeMarks();title.textContent=label;content.replaceChildren();message('');dialog.scrollTop=0;return viewToken;}
   function fail(error){message('操作失败：'+(error?.message||'浏览器存储不可用')+'。未保存的内容仍保留在当前窗口。');}
   menuButton.title='对局记录';menuButton.setAttribute('aria-label','对局记录');menuButton.setAttribute('aria-haspopup','dialog');menuButton.setAttribute('aria-controls',dialog.id);
   menuButton.addEventListener('click',()=>{
     saveEntry.disabled=!getCurrent().state.complete;saveEntry.title=saveEntry.disabled?'完成全部选禁后可保存':'';
     if(!dialog.open)dialog.showModal();history();
   });
-  dialog.addEventListener('close',()=>{viewToken++;cancelPress();markerDialog.close();});
+  dialog.addEventListener('close',()=>{viewToken++;closeMarks();});
   async function history(){
     const token=changeView('历史对局');message('读取本机记录…');
     try{
@@ -69,9 +70,9 @@ export function installMatchRecords(menuButton,{getCurrent,assets}){
       function addTag(){const [value]=uniqueTags([input.value]);if(!value){message('请输入标签名称。');return;}tagOptions=uniqueTags([...tagOptions,value]);if(!record.tags.some(tag=>tagKey(tag)===tagKey(value)))chooseTag(value);else drawTags();input.value='';}
       custom.append(input,button('添加标签',addTag));input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addTag();}});
       tagSection.append(tagChoices,custom);form.append(tagSection);
-      form.append(el('p','match-muted','长按阵容头像添加标记；键盘聚焦头像后按 Enter。再次选择可更换或清除。'));
+      form.append(el('p','match-muted','点击阵容头像选择标记，再次选择当前标记即可取消。'));
       const preview=el('div','match-preview');
-      function refreshCard(){preview.replaceChildren(renderMatchCard(record,assets,{editable:true}));}
+      function refreshCard(){closeMarks();preview.replaceChildren(renderMatchCard(record,assets,{editable:true}));}
       const refresh=()=>refreshCard();editor={record,refresh};
       refreshCard();drawTags();form.append(preview);
       const submit=el('button','match-submit','保存对局记录');submit.type='submit';form.append(submit);content.append(form);
@@ -87,24 +88,38 @@ export function installMatchRecords(menuButton,{getCurrent,assets}){
       try{tagOptions=await store.tags();if(token===viewToken){tagOptions=uniqueTags([...tagOptions,...record.tags]);drawTags();}}catch(error){if(token===viewToken)message('标签库读取失败；可继续填写，保存时会再次尝试。');}
     }catch(error){fail(error);}
   }
-  function cancelPress(){if(press)clearTimeout(press.timer);press=null;}
-  function showMarks(id){
-    if(!editor?.record)return;const {record,refresh}=editor,op=record.operators.find(o=>o.id===id);
-    markerDialog.replaceChildren(el('h3','','标记 '+operatorLabel(op)));
-    const choices=el('div','match-marker-choices');
-    for(const [key,label] of Object.entries(marks)){
-      const b=button('',()=>{record.marks[id]=key;refresh();markerDialog.close();});b.setAttribute('aria-label',label);b.setAttribute('aria-pressed',String(record.marks[id]===key));
-      const img=el('img');img.src=assets.recordMarks[key];img.alt='';b.append(img,el('span','',label));choices.append(b);
-    }
-    markerDialog.append(choices,button('清除标记',()=>{delete record.marks[id];refresh();markerDialog.close();}),button('取消',()=>markerDialog.close()));markerDialog.showModal();
+  function closeMarks(restoreFocus=false){
+    const previous=markAnchor;markAnchor=null;previous?.setAttribute('aria-expanded','false');
+    if(markerPopover.hasAttribute('popover')&&markerPopover.matches(':popover-open'))markerPopover.hidePopover();
+    markerPopover.hidden=true;
+    if(restoreFocus&&previous?.isConnected)previous.focus({preventScroll:true});
   }
-  content.addEventListener('pointerdown',event=>{
-    if(press){cancelPress();return;}const target=event.target.closest('[data-mark-id]');if(!target||event.button!==0||event.isPrimary===false)return;
-    press={id:event.pointerId,x:event.clientX,y:event.clientY,timer:setTimeout(()=>{cancelPress();showMarks(target.dataset.markId);},450)};
-  });
-  document.addEventListener('pointermove',event=>{if(press&&event.pointerId===press.id&&Math.hypot(event.clientX-press.x,event.clientY-press.y)>10)cancelPress();},{passive:true});
-  for(const type of ['pointerup','pointercancel'])document.addEventListener(type,cancelPress);
-  dialog.addEventListener('scroll',cancelPress,true);window.addEventListener('blur',cancelPress);
+  function positionMarks(){
+    if(!markAnchor?.isConnected){closeMarks();return;}
+    const a=markAnchor.querySelector('.match-face').getBoundingClientRect(),d=markerPopover.getBoundingClientRect(),r=dialog.getBoundingClientRect(),gap=8;
+    const left=Math.max(gap,r.left+gap),right=Math.min(innerWidth-gap,r.right-gap),top=Math.max(gap,head.getBoundingClientRect().bottom+gap),bottom=Math.min(innerHeight-gap,r.bottom-gap);
+    let x=a.right+gap;if(x+d.width>right)x=a.left-gap-d.width;
+    markerPopover.style.left=Math.max(left,Math.min(x,right-d.width))+'px';
+    markerPopover.style.top=Math.max(top,Math.min(a.top+(a.height-d.height)/2,bottom-d.height))+'px';
+  }
+  function showMarks(target){
+    if(!editor?.record)return;if(markAnchor===target){closeMarks();return;}
+    closeMarks();markAnchor=target;const id=target.dataset.markId,{record,refresh}=editor,op=record.operators.find(o=>o.id===id);
+    markerPopover.setAttribute('aria-label','标记 '+operatorLabel(op));markerPopover.replaceChildren();
+    target.setAttribute('aria-expanded','true');target.setAttribute('aria-controls',markerPopover.id);
+    for(const [key,label] of Object.entries(marks)){
+      const b=button('',()=>{
+        if(record.marks[id]===key)delete record.marks[id];else record.marks[id]=key;
+        refresh();[...content.querySelectorAll('[data-mark-id]')].find(node=>node.dataset.markId===id)?.focus({preventScroll:true});
+      });b.setAttribute('aria-label',label);b.title=label;b.setAttribute('aria-pressed',String(record.marks[id]===key));
+      const img=el('img');img.src=assets.recordMarks[key];img.alt='';b.append(img);markerPopover.append(b);
+    }
+    markerPopover.hidden=false;if(markerPopover.hasAttribute('popover'))markerPopover.showPopover();positionMarks();
+    (markerPopover.querySelector('[aria-pressed="true"]')||markerPopover.querySelector('button')).focus({preventScroll:true});
+  }
+  document.addEventListener('pointerdown',event=>{if(markAnchor&&!markerPopover.contains(event.target)&&!event.target.closest('[data-mark-id]'))closeMarks();},true);
+  document.addEventListener('keydown',event=>{if(markAnchor&&event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();closeMarks(true);}},true);
+  dialog.addEventListener('scroll',()=>closeMarks(),true);window.addEventListener('blur',()=>closeMarks());window.addEventListener('resize',()=>{if(markAnchor)positionMarks();});
   content.addEventListener('contextmenu',event=>{if(event.target.closest('[data-mark-id]'))event.preventDefault();});
-  content.addEventListener('click',event=>{const target=event.target.closest('[data-mark-id]');if(target){event.preventDefault();if(event.detail===0)showMarks(target.dataset.markId);}});
+  content.addEventListener('click',event=>{const target=event.target.closest('[data-mark-id]');if(target){event.preventDefault();showMarks(target);}});
 }
