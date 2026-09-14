@@ -35,6 +35,11 @@ try{
   const coreCount=new Set([...Object.values(manifest.avatars),...Object.values(manifest.tokens),...Object.values(manifest.icons)]).size;
   const base=origin+'/los/operator-selection/';
   await page.goto(base+'index.html');
+  assert.equal(await page.locator('.side-tabs,.side-tab').count(),0);
+  await page.locator('#tab-defense').click();
+  assert.equal(await page.locator('#tab-defense').getAttribute('aria-pressed'),'true');
+  await page.locator('#tab-defense').press('ArrowLeft');
+  assert.equal(await page.locator('#tab-attack').getAttribute('aria-pressed'),'true');
   await page.waitForFunction(async expected=>{
     const names=await caches.keys(),name=names.find(n=>n.endsWith(':core-v1'));
     return navigator.serviceWorker.controller&&name&&(await (await caches.open(name)).keys()).length===expected;
@@ -80,6 +85,7 @@ try{
   const layouts=[];
   for(const [width,height] of [[320,568],[360,640],[390,844],[430,932],[768,1024],[820,1180],[1024,768],[1366,768],[1440,900],[1920,1080],[844,390],[667,375],[844,320],[800,300],[667,300],[960,360]]){
     await page.setViewportSize({width,height});
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     const metrics=await page.evaluate(()=>{
       const rect=s=>document.querySelector(s).getBoundingClientRect();
       const squares=[...document.querySelectorAll('.operator-button,.operator-slot,.ban-slot')].map(el=>el.getBoundingClientRect());
@@ -89,15 +95,22 @@ try{
         teams:[...document.querySelectorAll('.panel-link')].every(el=>{const r=el.getBoundingClientRect();return r.top>=rect('.ban-region').bottom&&r.bottom<=rect('.sequence-region').top;}),
         gridHeight:rect('.operator-grid').height};
     });
+    const controlGeometry=await page.evaluate(()=>['.phase-tools','.phase-actions','.phase-block','.phase-block .eyebrow','.phase-block strong','.phase-block .timer-placeholder'].map(s=>[s,document.querySelector(s).getBoundingClientRect().toJSON()]));
     assert.equal(await page.evaluate(()=>{
       const rule=document.querySelector('.phase-tools').getBoundingClientRect(),actions=document.querySelector('.phase-actions').getBoundingClientRect();
       const phase=document.querySelector('.phase-block').getBoundingClientRect();
       return Math.abs(rule.width-actions.width)<1&&actions.right<=phase.left+1&&rule.left>=phase.right-1&&[...document.querySelector('.phase-block').children].every(el=>{const r=el.getBoundingClientRect();return r.top>=phase.top&&r.bottom<=phase.bottom+1;});
-    }),true,`Symmetric controls and phase text must fit at ${width}x${height}`);
+    }),true,`Symmetric controls and phase text must fit at ${width}x${height}: ${JSON.stringify(controlGeometry)}`);
     assert.ok(metrics.bottom<=height+1&&metrics.top>=0,JSON.stringify({width,height,...metrics}));
     assert.ok(!metrics.overflow&&metrics.square&&metrics.teams,JSON.stringify({width,height,...metrics}));
     assert.ok(metrics.matrix>=63&&metrics.selected>=(height<=370?28:43)&&metrics.gridHeight>=64,JSON.stringify({width,height,...metrics}));
     layouts.push({width,height,...metrics});
+    assert.equal(await page.locator('.team-row .info-card').evaluateAll(cards=>cards.every(card=>{
+      const box=card.getBoundingClientRect();
+      return [...card.querySelectorAll('img')].every(img=>{const r=img.getBoundingClientRect();return r.left>=box.left-1&&r.right<=box.right+1&&r.top>=box.top-1&&r.bottom<=box.bottom+1;})&&[...card.querySelectorAll('.dice-row')].every(row=>{
+        const dice=row.querySelector('img');return !dice||Math.abs(row.clientWidth-3.5*dice.getBoundingClientRect().width)<1;
+      });
+    })),true,`Details must fit their icons without unused dice columns at ${width}x${height}`);
     if(output)await page.screenshot({path:join(output,`${width}x${height}.png`),fullPage:true});
     if(height<=370){
       assert.equal(await page.locator('.team-list').first().evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),1);
@@ -112,7 +125,7 @@ try{
   await page.locator('.reset-button').click();
   assert.equal(await page.locator('.panel-link,.info-card img,.ban-slot img,.sequence-track .done').count(),0);
   assert.equal(await page.locator('.undo-button').isDisabled(),true);
-  assert.equal(await page.locator('#tab-attack').getAttribute('aria-selected'),'true');
+  assert.equal(await page.locator('#tab-attack').getAttribute('aria-pressed'),'true');
   assert.equal(await page.locator('.rule-select').isEnabled(),true);
   // Supply an additional rule only in this isolated test, exercising registry extension.
   await page.route('**/rules.js',async route=>{

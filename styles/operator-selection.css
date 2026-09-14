@@ -414,9 +414,23 @@ body { margin:0; }
 .phase-actions .reset-button .ui-icon { width:18px; height:18px; }
 .phase-actions .undo-button .ui-icon, .phase-actions .reset-button .ui-icon, .phase-tools .ui-icon { width:24px; height:24px; }
 .settings-button:disabled { opacity:.45; }
+.phase-actions button, .phase-tools button { transition:background-color .2s,border-color .2s; }
 @media (max-height:500px) and (min-aspect-ratio:1/1) {
   .operator-board { grid-template-rows:44px minmax(0,1fr) 32px; }
 }
+
+/* Content-sized details: four dice overlap by one sixth; stat cells fit one icon. */
+.selection-region.compact-side-columns { grid-template-columns:var(--detail-teamWidth) minmax(0,1fr) var(--detail-teamWidth); }
+.compact-side-columns .team-row, .compact-side-columns .team-column--defense .team-row { display:grid; grid-template-columns:var(--detail-portrait) var(--detail-infoWidth); gap:4px; container-type:normal; }
+.compact-side-columns .team-column--defense .team-row { grid-template-columns:var(--detail-infoWidth) var(--detail-portrait); }
+.compact-side-columns .team-row > .operator-slot, .compact-side-columns .team-row > .panel-link { width:var(--detail-portrait); height:var(--detail-portrait); }
+.selection-region .team-column .info-card { width:var(--detail-infoWidth); height:var(--detail-cardHeight); padding:3px; grid-template-columns:calc(3.5 * var(--detail-dice)) calc(var(--detail-stat) + 2px); justify-self:center; }
+.selection-region .team-column--attack .info-card { grid-template-columns:calc(var(--detail-stat) + 2px) calc(3.5 * var(--detail-dice)); }
+.selection-region .weapon-grid, .selection-region .team-column--attack .weapon-grid { padding:0; gap:2px; }
+.selection-region .stat-column, .selection-region .team-column--attack .stat-column { padding:0; gap:2px; border:0; }
+.selection-region .dice-row .token { flex:0 0 var(--detail-dice); width:var(--detail-dice); height:var(--detail-dice); }
+.selection-region .dice-row .token + .token { margin-left:calc(var(--detail-dice) / -6); }
+.selection-region .stat-slot .token { width:var(--detail-stat); height:var(--detail-stat); }
 @media (max-width:600px) and (max-aspect-ratio:1/1) {
   .operator-board { grid-template-rows:68px minmax(0,1fr) 32px; }
   .ban-region { --action-size:clamp(44px,12vw,48px); grid-template-columns:28px calc(2 * var(--action-size)) minmax(0,1fr) calc(2 * var(--action-size)) 28px; }
@@ -424,4 +438,31 @@ body { margin:0; }
   .ban-slots { flex-direction:column; gap:2px; }
   .ban-slots span { width:22px; }
   .phase-block strong { font-size:10px; }
+}
+
+/* Faction switching lives on the ban strip; the catalogue gets the whole pool. */
+.operator-pool { grid-template-rows:minmax(0,1fr); gap:0; }
+.ban-side { position:relative; min-width:0; min-height:44px; border-radius:0; overflow:hidden; touch-action:manipulation; }
+.ban-side--attack { --faction-color:var(--attack); color:var(--attack); background:#302a18; }
+.ban-side--defense { --faction-color:var(--defense); color:var(--defense); background:#192c38; }
+.ban-side > .ui-icon { position:absolute; inset:0; margin:auto; width:80%; height:90%; opacity:.25; pointer-events:none; }
+.ban-side .ban-slots { position:relative; z-index:1; pointer-events:none; }
+.ban-side:hover { background:color-mix(in srgb,var(--faction-color) 24%,var(--panel)); }
+.ban-side[aria-pressed="true"] { box-shadow:inset 0 -3px var(--faction-color); border-color:var(--faction-color); }
+.ban-side:focus-visible { outline:2px solid white; outline-offset:-3px; }
+@media (max-width:600px) and (max-aspect-ratio:1/1) {
+  .operator-board { grid-template-rows:94px minmax(0,1fr) 32px; }
+  .ban-region { grid-template-columns:minmax(0,1fr) minmax(104px,1.2fr) minmax(0,1fr); grid-template-rows:44px 44px; align-content:space-between; }
+  .ban-side--attack { grid-column:1; grid-row:1; }
+  .ban-side--defense { grid-column:3; grid-row:1; }
+  .ban-side--attack { justify-content:flex-start; }
+  .ban-side--defense { justify-content:flex-end; }
+  .ban-side > .ui-icon { width:36%; }
+  .ban-side--attack > .ui-icon { left:auto; right:2px; }
+  .ban-side--defense > .ui-icon { right:auto; left:2px; }
+  .phase-block { grid-column:2; grid-row:1 / 3; }
+  .phase-actions { grid-column:1; grid-row:2; justify-self:center; }
+  .phase-tools { grid-column:3; grid-row:2; justify-self:center; }
+  .ban-slots { flex-direction:row; }
+  .ban-slots span { width:28px; }
 }

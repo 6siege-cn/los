@@ -5,6 +5,7 @@ import {createDraft} from './engine.js';
 import {operatorFamily,versionLabel} from './identity.js';
 import {startImageCache} from './image-cache.js';
 import {fitCatalogue} from './responsive-grid.js';
+import {fitDetails} from './compact-details.js';
 let ruleId=settings.rule, rule=rules[ruleId], draft=createDraft(rule,operators);
 const byId=new Map(operators.map(op=>[op.id,op]));
 const board=document.querySelector('.operator-board');
@@ -46,17 +47,20 @@ function renderTeam(side,state){
   for(let i=0;i<capacity;i++){const slot=node('span','ban-slot');const op=byId.get(state.bans[side][i]);if(op){slot.append(avatar(op));slot.title=sideName[side]+'禁用 '+op.name;}banSlots.append(slot);}
 }
 const pool=document.querySelector('.operator-pool');pool.replaceChildren();
-const tabs=node('div','side-tabs');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','干员阵营');
+const tabs=[];
 for(const side of ['attack','defense']){
-  const button=node('button','side-tab');button.type='button';button.id='tab-'+side;button.dataset.side=side;button.setAttribute('role','tab');button.setAttribute('aria-label',sideName[side]);button.setAttribute('aria-controls','operator-list');button.title=sideName[side];button.append(icon(side));
+  const previous=document.querySelector('.ban-side--'+side);
+  const button=node('button',previous.className);button.type='button';button.id='tab-'+side;button.dataset.side=side;button.setAttribute('aria-label','切换到'+sideName[side]+'干员列表');button.setAttribute('aria-controls','operator-list');button.title=sideName[side];
+  const slots=node('span','ban-slots');slots.setAttribute('aria-label',sideName[side]+'禁用的干员');
+  button.append(icon(side),slots);previous.replaceWith(button);
   button.addEventListener('click',()=>switchSide(side));
   button.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();switchSide(e.key==='Home'?'attack':e.key==='End'?'defense':activeSide==='attack'?'defense':'attack');document.getElementById('tab-'+activeSide).focus();}});
-  tabs.append(button);
+  tabs.push(button);
 }
-const grid=node('div','operator-grid');grid.id='operator-list';grid.setAttribute('role','tabpanel');grid.tabIndex=0;pool.append(tabs,grid);
+const grid=node('div','operator-grid');grid.id='operator-list';grid.setAttribute('role','region');grid.tabIndex=0;pool.append(grid);
 function switchSide(side){scroll[activeSide]=grid.scrollTop;activeSide=side;renderGrid(draft.snapshot());}
 function renderGrid(state){
-  for(const b of tabs.children){const selected=b.dataset.side===activeSide;b.setAttribute('aria-selected',String(selected));b.tabIndex=selected?0:-1;}
+  for(const b of tabs){const selected=b.dataset.side===activeSide;b.setAttribute('aria-pressed',String(selected));}
   grid.setAttribute('aria-labelledby','tab-'+activeSide);grid.replaceChildren();
   for(const op of operators.filter(op=>op.side===activeSide)){
     const event=state.history.find(e=>operatorFamily(byId.get(e.operatorId))===operatorFamily(op)),button=node('button','operator-button');
@@ -106,6 +110,7 @@ function render(){
   undo.disabled=!state.history.length;renderGrid(state);
 }
 render();
+fitDetails(document.querySelector('.selection-region'));
 fitCatalogue(grid);
 if(document.readyState==='complete')startImageCache();
 else window.addEventListener('load',startImageCache,{once:true});
