@@ -6,6 +6,7 @@ import {dirname,join,extname,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import manifest from '../operator-selection/src/asset-manifest.js';
+import {checkSkillPreview} from './check-skill-preview.mjs';
 const require=createRequire(import.meta.url);
 let chromium;
 try{({chromium}=require('playwright'));}
@@ -85,7 +86,7 @@ try{
   }),true,'Dice must remain overlapped and centered on mobile');
   if(output)await page.screenshot({path:join(output,'mobile.png'),fullPage:true});
   // Fill every pick/ban slot, then exercise all layouts with real rendered data.
-  for(let i=0;i<13;i++)await page.locator('.operator-button:not(:disabled)').first().click();
+  for(let i=0;i<13;i++)await page.locator('.operator-button[aria-disabled="false"]').first().click();
   assert.equal(await page.locator('.panel-link').count(),10);
   const layouts=[];
   for(const [width,height] of [[320,568],[360,640],[390,844],[430,932],[768,1024],[820,1180],[1024,768],[1366,768],[1440,900],[1920,1080],[844,390],[667,375],[844,320],[800,300],[667,300],[960,360]]){
@@ -125,7 +126,7 @@ try{
   for(let i=0;i<14;i++)await page.locator('.undo-button').click();
   assert.equal(await page.locator('.panel-link,.info-card img,.ban-slot img').count(),0);
   assert.equal(await page.locator('.rule-select').isEnabled(),true);
-  await page.locator('.operator-button:not(:disabled)').first().click();
+  await page.locator('.operator-button[aria-disabled="false"]').first().click();
   assert.equal(await page.locator('.rule-select').isDisabled(),true);
   await page.locator('.reset-button').click();
   assert.equal(await page.locator('.panel-link,.info-card img,.ban-slot img,.sequence-track .done').count(),0);
@@ -136,7 +137,7 @@ try{
   await page.locator('.rule-select').selectOption('fiveBan');
   assert.equal(await page.locator('.ban-slot').count(),10);
   assert.equal(await page.locator('.sequence-track li').count(),20);
-  for(let i=0;i<20;i++)await page.locator('.operator-button:not(:disabled)').first().click();
+  for(let i=0;i<20;i++)await page.locator('.operator-button[aria-disabled="false"]').first().click();
   assert.equal(await page.locator('.panel-link').count(),10);
   assert.equal(await page.locator('.ban-slot img').count(),10);
   for(const [width,height] of [[320,568],[390,844],[667,300],[1366,768]]){
@@ -160,7 +161,7 @@ try{
   await page.locator('.rule-select').selectOption('fixture');
   assert.ok((await page.locator('.phase-block').innerText()).includes('测试规则'));
   assert.ok((await page.locator('.phase-block strong').innerText()).startsWith('防守方'));
-  await page.locator('.operator-button:not(:disabled)').first().click();
+  await page.locator('.operator-button[aria-disabled="false"]').first().click();
   assert.equal(await page.locator('.rule-select').isDisabled(),true);
   await page.locator('.reset-button').click();
   assert.equal(await page.locator('.rule-select').inputValue(),'standard');
@@ -176,7 +177,7 @@ try{
     assert.equal(await page.locator('.operator-button .variant').count(),0);
   }
   await page.locator('.rule-select').selectOption('fiveBan');
-  await page.locator('.operator-button:not(:disabled)').first().click();
+  await page.locator('.operator-button[aria-disabled="false"]').first().click();
   assert.equal(await page.locator('.settings-button').isDisabled(),true);
   assert.equal(await page.locator('.rule-select').isDisabled(),true);
   await page.locator('.undo-button').click();
@@ -192,4 +193,7 @@ try{
   assert.ok(await page.locator('.operator-button .variant').count()>0);
   assert.deepEqual(errors,[]);
   console.log(JSON.stringify({coreImages:coreCount,firstVisitNetworkRequests:firstRequests,repeatVisitImageDownloads:0,offlinePanel:true,offlineTokens:true,offlineFactionSwitch:true,layouts,pageErrors:errors}));
+  await checkSkillPreview(page,output);
+  assert.deepEqual(errors,[]);
+  console.log('Skill preview: mouse, touch, disabled portraits, selected/banned slots, ALT, fallback and drag cancellation passed.');
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

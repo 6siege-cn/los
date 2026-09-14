@@ -1,4 +1,4 @@
-import operators from '../data/operators.js?v=overview-audit-2';
+import operators from '../data/operators.js?v=skill-preview-1';
 import {assets,settings} from './config.js?v=faction-colors-1';
 import {rules,actions} from './rules.js?v=five-ban-1';
 import {createDraft} from './engine.js';
@@ -7,6 +7,7 @@ import {startImageCache} from './image-cache.js';
 import {fitCatalogue} from './responsive-grid.js';
 import {fitDetails} from './compact-details.js';
 import {defaultScope,inScope} from './operator-scope.js';
+import {installSkillPreview} from './skill-preview.js';
 let scope={...defaultScope};
 const availableOperators=()=>operators.filter(op=>inScope(op,scope));
 let ruleId=settings.rule, rule=rules[ruleId], draft=createDraft(rule,availableOperators());
@@ -39,7 +40,7 @@ function renderTeam(side,state){
   const list=document.querySelector('.team-column--'+side+' .team-list');list.replaceChildren();
   for(let i=0;i<rule.teamSize;i++){
     const op=byId.get(state.picks[side][i]),row=node('article','team-row'),slot=node('div','operator-slot');
-    if(op){slot.append(avatar(op));appendVersion(slot,op);slot.title=displayName(op); // The CSV owns the panel source.
+    if(op){slot.dataset.skillId=op.id;slot.append(avatar(op));appendVersion(slot,op);slot.title=displayName(op); // The CSV owns the panel source.
       const link=node('a','panel-link');link.href=assets.panelURL(op.panel);link.target='_blank';link.rel='noopener';link.title='查看 '+op.name+' 干员面板';link.setAttribute('aria-label',link.title);link.append(slot);row.append(link);
     } else row.append(slot);
     row.append(card(op));list.append(row);
@@ -48,7 +49,7 @@ function renderTeam(side,state){
   const banSlots=document.querySelector('.ban-side--'+side+' .ban-slots');banSlots.replaceChildren();
   const capacity=state.steps.filter(s=>s.side===side&&s.type==='ban').length;
   banSlots.parentElement.dataset.banCount=capacity;
-  for(let i=0;i<capacity;i++){const slot=node('span','ban-slot');const op=byId.get(state.bans[side][i]);if(op){slot.append(avatar(op));slot.title=sideName[side]+'禁用 '+op.name;}banSlots.append(slot);}
+  for(let i=0;i<capacity;i++){const slot=node('span','ban-slot');const op=byId.get(state.bans[side][i]);if(op){slot.dataset.skillId=op.id;slot.append(avatar(op));slot.title=sideName[side]+'禁用 '+op.name;}banSlots.append(slot);}
 }
 const pool=document.querySelector('.operator-pool');pool.replaceChildren();
 const tabs=[];
@@ -68,10 +69,10 @@ function renderGrid(state){
   grid.setAttribute('aria-labelledby','tab-'+activeSide);grid.replaceChildren();
   for(const op of availableOperators().filter(op=>op.side===activeSide)){
     const event=state.history.find(e=>operatorFamily(byId.get(e.operatorId))===operatorFamily(op)),button=node('button','operator-button');
-    button.type='button';button.dataset.operatorId=op.id;button.append(avatar(op));
+    button.type='button';button.dataset.operatorId=op.id;button.dataset.skillId=op.id;button.setAttribute('aria-description','长按或按 F1 查看技能');button.append(avatar(op));
     const name=displayName(op),otherVersion=event&&event.operatorId!==op.id&&event.type==='pick';button.title=name;
     button.setAttribute('aria-label',name+(otherVersion?' · 其他版本已选择':event?' · 已'+actions[event.type].label:''));
-    button.disabled=!draft.canChoose(op.id);
+    button.setAttribute('aria-disabled',String(!draft.canChoose(op.id)));
     appendVersion(button,op);
     if(event){button.classList.add(otherVersion?'is-version-locked':'is-'+event.type);button.style.setProperty('--owner-color',settings.colors[event.side]);if(!otherVersion)button.append(icon(event.type));}
     button.addEventListener('click',()=>{if(draft.choose(op.id)){const next=draft.snapshot();scroll[activeSide]=grid.scrollTop;if(next.step&&!next.available.some(s=>s.target===activeSide))activeSide=next.step.target;render();}});
@@ -132,6 +133,7 @@ function render(){
   undo.disabled=!state.history.length;renderGrid(state);
 }
 render();
+installSkillPreview(board,{byId,avatarURL:assets.avatarURL});
 fitDetails(document.querySelector('.selection-region'));
 fitCatalogue(grid);
 if(document.readyState==='complete')startImageCache();

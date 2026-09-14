@@ -270,8 +270,8 @@
 .panel-link { align-self:center; min-width:0; }
 .team-column--defense .panel-link { grid-column:2; }
 .operator-button { position:relative; width:100%; aspect-ratio:1; min-width:0; padding:6px; border:1px solid var(--line); border-radius:0; background:var(--panel-soft); overflow:hidden; }
-.operator-button:disabled { background:var(--panel-soft); opacity:1; cursor:default; }
-.operator-button:not(:disabled):hover { border-color:var(--r6s-highlight); background:#30363e; }
+.operator-button[aria-disabled="true"] { background:var(--panel-soft); opacity:1; cursor:default; }
+.operator-button[aria-disabled="false"]:hover { border-color:var(--r6s-highlight); background:#30363e; }
 .operator-button:focus-visible, .side-tab:focus-visible, .undo-button:focus-visible { outline:2px solid white; outline-offset:-2px; }
 .ui-icon { display:inline-block; width:24px; height:24px; flex:none; background:currentColor; mask:var(--icon-url) center/contain no-repeat; -webkit-mask:var(--icon-url) center/contain no-repeat; }
 .side-tabs { display:flex; justify-content:space-between; }
@@ -453,7 +453,7 @@ body { margin:0; }
 .ban-side--attack { --faction-color:var(--attack); color:var(--attack); background:color-mix(in srgb,var(--attack) 18%,var(--panel)); }
 .ban-side--defense { --faction-color:var(--defense); color:var(--defense); background:color-mix(in srgb,var(--defense) 18%,var(--panel)); }
 .ban-side > .ui-icon { position:absolute; inset:0; margin:auto; width:80%; height:90%; opacity:.25; pointer-events:none; }
-.ban-side .ban-slots { position:relative; z-index:1; pointer-events:none; }
+.ban-side .ban-slots { position:relative; z-index:1; pointer-events:auto; }
 .ban-side:hover { background:color-mix(in srgb,var(--faction-color) 24%,var(--panel)); }
 .ban-side[aria-pressed="true"] { box-shadow:inset 0 -3px var(--faction-color); border-color:var(--faction-color); }
 .ban-side:focus-visible { outline:2px solid white; outline-offset:-3px; }

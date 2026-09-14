@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "optimize-assets": "node scripts/optimize-operator-assets.mjs"
+    "optimize-assets": "node scripts/optimize-operator-assets.mjs",
+    "extract-skills": "node scripts/extract-operator-skills.mjs",
+    "build-operators": "node scripts/build-operators.mjs"
   },
-  "devDependencies": {"sharp": "0.35.4"}
+  "devDependencies": {"sharp": "0.35.4", "word-extractor": "1.0.4"}
 }
