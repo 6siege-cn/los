@@ -7,9 +7,10 @@ import {startImageCache} from './image-cache.js';
 import {fitCatalogue} from './responsive-grid.js';
 import {fitDetails} from './compact-details.js';
 import {defaultScope,inScope} from './operator-scope.js';
-import {sortOperators} from './operator-order.js?v=recruit-correction-1';
+import {sortOperators,orderModes,defaultOrder} from './operator-order.js?v=unified-settings-1';
 import {installSkillPreview} from './skill-preview.js?v=native-menu-2';
 let scope={...defaultScope};
+let orderMode=defaultOrder;
 const availableOperators=()=>operators.filter(op=>inScope(op,scope));
 let ruleId=settings.rule, rule=rules[ruleId], draft=createDraft(rule,availableOperators());
 const byId=new Map(operators.map(op=>[op.id,op]));
@@ -68,7 +69,7 @@ function switchSide(side){scroll[activeSide]=grid.scrollTop;activeSide=side;rend
 function renderGrid(state){
   for(const b of tabs){const selected=b.dataset.side===activeSide;b.setAttribute('aria-pressed',String(selected));}
   grid.setAttribute('aria-labelledby','tab-'+activeSide);grid.replaceChildren();
-  for(const op of sortOperators(availableOperators().filter(op=>op.side===activeSide))){
+  for(const op of sortOperators(availableOperators().filter(op=>op.side===activeSide),orderMode)){
     const event=state.history.find(e=>operatorFamily(byId.get(e.operatorId))===operatorFamily(op)),button=node('button','operator-button');
     button.type='button';button.dataset.operatorId=op.id;button.dataset.skillId=op.id;button.setAttribute('aria-description','长按或按 F1 查看技能');button.append(avatar(op));
     const name=displayName(op),otherVersion=event&&event.operatorId!==op.id&&event.type==='pick';button.title=name;
@@ -84,29 +85,42 @@ function renderGrid(state){
 const footer=document.querySelector('.sequence-region');footer.replaceChildren();
 const track=node('ol','sequence-track'),undo=node('button','undo-button');undo.type='button';undo.append(icon('undo'));undo.title='撤回';undo.addEventListener('click',()=>{const last=draft.snapshot().history.at(-1);if(draft.undo()){activeSide=last.target;render();}});footer.append(track);
 const phase=document.querySelector('.phase-block');phase.setAttribute('aria-live','polite');
-const ruleCell=node('label','rule-control'),ruleSelect=node('select','rule-select');
+const menuButton=node('button','menu-button');menuButton.type='button';menuButton.setAttribute('aria-label','菜单（暂未开放）');menuButton.title='暂未开放';menuButton.append(icon('rules'));
+const ruleSelect=node('select','rule-select settings-select');
 ruleSelect.setAttribute('aria-label','选择生效规则');
 for(const [id,value] of Object.entries(rules)){const option=node('option','',value.name);option.value=id;ruleSelect.append(option);}
-ruleCell.append(icon('rules'),ruleSelect);
 const controls=node('div','phase-actions'),reset=node('button','reset-button');reset.type='button';reset.title='重置';
 reset.prepend(icon('reset'));
 undo.setAttribute('aria-label','撤回上一步');reset.setAttribute('aria-label','重置到初始状态');
 controls.append(undo,reset);phase.before(controls);
 const toolsCell=node('div','phase-tools'),settingsButton=node('button','settings-button');
-settingsButton.type='button';settingsButton.title='干员范围设置';settingsButton.setAttribute('aria-label',settingsButton.title);settingsButton.setAttribute('aria-haspopup','dialog');settingsButton.append(icon('settings'));
-toolsCell.append(ruleCell,settingsButton);phase.after(toolsCell);
-const scopeDialog=node('dialog','scope-dialog');scopeDialog.id='operator-scope';
-const scopeTitle=node('h2','','干员范围');scopeTitle.id='scope-title';scopeDialog.setAttribute('aria-labelledby',scopeTitle.id);
-scopeDialog.append(scopeTitle,node('p','','官方干员始终开放，以下版本可独立开关。'));
+settingsButton.type='button';settingsButton.title='设置';settingsButton.setAttribute('aria-label','设置');settingsButton.setAttribute('aria-haspopup','dialog');settingsButton.append(icon('settings'));
+toolsCell.append(menuButton,settingsButton);phase.after(toolsCell);
+const scopeDialog=node('dialog','scope-dialog settings-dialog');scopeDialog.id='operator-settings';
+const scopeTitle=node('h2','','设置');scopeTitle.id='settings-title';scopeDialog.setAttribute('aria-labelledby',scopeTitle.id);
+scopeDialog.append(scopeTitle,node('p','','开始选禁前可修改，修改后立即生效。'));
+function settingSection(title,hint){
+  const section=node('fieldset','settings-section');section.append(node('legend','',title),node('p','',hint));scopeDialog.append(section);return section;
+}
+const ruleSection=settingSection('选择规则','配置本局选用与禁用的轮次顺序。');ruleSection.append(ruleSelect);
+const scopeSection=settingSection('干员范围','官方干员始终开放，以下版本可独立开关。');
 const scopeInputs={};
 for(const key of Object.keys(defaultScope)){
   const label=node('label','scope-option'),input=node('input');input.type='checkbox';input.checked=scope[key];input.name=key;
-  label.append(node('span','',key.toUpperCase()),input);scopeDialog.append(label);scopeInputs[key]=input;
+  label.append(node('span','',key.toUpperCase()),input);scopeSection.append(label);scopeInputs[key]=input;
   input.addEventListener('change',()=>{
     if(draft.snapshot().history.length){input.checked=scope[key];return;}
     scope[key]=input.checked;restart(ruleId);
   });
 }
+const orderSection=settingSection('干员顺序','速度/枪械按数值排序；时间按指定名单，同名 OFF → ALT → DIY。');
+const orderSelect=node('select','order-select settings-select');orderSelect.setAttribute('aria-label','干员顺序');
+for(const [id,label] of Object.entries(orderModes)){const option=node('option','',label);option.value=id;orderSelect.append(option);}
+orderSection.append(orderSelect);
+orderSelect.addEventListener('change',()=>{
+  if(draft.snapshot().history.length||!Object.hasOwn(orderModes,orderSelect.value)){orderSelect.value=orderMode;return;}
+  orderMode=orderSelect.value;scroll.attack=0;scroll.defense=0;render();
+});
 const closeScope=node('button','scope-close','完成');closeScope.type='button';closeScope.addEventListener('click',()=>scopeDialog.close());scopeDialog.append(closeScope);document.body.append(scopeDialog);
 settingsButton.setAttribute('aria-controls',scopeDialog.id);
 settingsButton.addEventListener('click',()=>{if(!draft.snapshot().history.length)scopeDialog.showModal();});
@@ -118,15 +132,14 @@ ruleSelect.addEventListener('change',()=>{
   if(draft.snapshot().history.length||!Object.hasOwn(rules,ruleSelect.value)){ruleSelect.value=ruleId;return;}
   restart(ruleSelect.value);
 });
-reset.addEventListener('click',()=>{scope={...defaultScope};scopeDialog.close();restart(settings.rule);});
+reset.addEventListener('click',()=>{scope={...defaultScope};orderMode=defaultOrder;scopeDialog.close();restart(settings.rule);});
 function render(){
   const state=draft.snapshot();for(const side of ['attack','defense'])renderTeam(side,state);
   ruleSelect.value=ruleId;ruleSelect.disabled=state.history.length>0;
   settingsButton.disabled=state.history.length>0;
-  settingsButton.title=settingsButton.disabled?'撤回全部操作或重置后可修改干员范围':'干员范围设置';
+  settingsButton.title=settingsButton.disabled?'撤回全部操作或重置后可修改设置':'设置';
+  orderSelect.value=orderMode;orderSelect.disabled=settingsButton.disabled;
   for(const [key,input] of Object.entries(scopeInputs)){input.checked=scope[key];input.disabled=settingsButton.disabled;}
-  ruleCell.classList.toggle('is-locked',ruleSelect.disabled);
-  ruleCell.title=ruleSelect.disabled?'撤回全部操作或重置后可更换规则':'选择生效规则';
   track.style.gridTemplateColumns=`repeat(${state.timeline.length},minmax(0,1fr))`;
   const tasks=[...new Set(state.available.map(s=>s.type))].map(type=>actions[type].label+' '+state.available.filter(s=>s.type===type).length);
   phase.replaceChildren(node('span','eyebrow',rule.name),node('strong','',state.step?sideName[state.step.side]+' · '+tasks.join(' / '):'选用完成'),node('span','timer-placeholder',state.step?'第 '+state.step.round+' / '+rule.rounds.length+' 轮 · 顺序不限':'5 对 5'));

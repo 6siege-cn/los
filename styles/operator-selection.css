@@ -401,11 +401,6 @@ body { margin:0; }
 /* Rule and session controls flank the current phase, not the round timeline. */
 .operator-board { grid-template-rows:56px minmax(0,1fr) 32px; }
 .ban-region { --action-size:48px; grid-template-columns:minmax(0,1fr) calc(2 * var(--action-size)) minmax(120px,180px) calc(2 * var(--action-size)) minmax(0,1fr); }
-.rule-control { position:relative; display:grid; place-items:center; min-width:0; font-size:11px; border-inline:1px solid var(--line); cursor:pointer; }
-.rule-select { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
-.rule-control:focus-within { outline:2px solid white; outline-offset:-2px; }
-.rule-control.is-locked { opacity:.45; cursor:default; }
-.rule-select:disabled { cursor:default; }
 .phase-actions, .phase-tools { display:flex; align-items:center; min-width:0; }
 .phase-actions button, .phase-tools button, .phase-tools .rule-control { min-width:var(--action-size); width:var(--action-size); height:44px; padding:0; border-radius:0; display:grid; place-items:center; border:1px solid var(--line); background:var(--panel-soft); }
 .phase-actions .undo-button { flex-direction:column; gap:0; font-size:10px; }
@@ -421,6 +416,15 @@ body { margin:0; }
 .scope-option { display:flex; align-items:center; justify-content:space-between; min-height:48px; padding:6px 12px; margin-top:6px; border:1px solid var(--line); background:var(--panel-soft); cursor:pointer; }
 .scope-option input { width:22px; height:22px; margin:0; accent-color:var(--r6s-highlight); }
 .scope-close { display:block; min-height:44px; width:100%; margin-top:12px; }
+.settings-dialog { width:min(440px,calc(100vw - 24px)); max-width:none; }
+.settings-section { min-width:0; margin:16px 0 0; padding:12px; border:1px solid var(--line); background:var(--panel-soft); }
+.settings-section legend { padding:0 6px; font-size:14px; font-weight:600; }
+.settings-section p { margin:0 0 10px; line-height:1.5; }
+.settings-select, .settings-section .scope-option { width:100%; min-height:44px; border:1px solid var(--line); border-radius:4px; background:var(--panel); color:var(--r6s-text); font:inherit; font-size:14px; }
+.settings-select { padding:8px 12px; cursor:pointer; color-scheme:dark; }
+.settings-section .scope-option { margin-top:8px; }
+.settings-select:focus-visible, .settings-section .scope-option:focus-within { outline:2px solid var(--r6s-highlight); outline-offset:2px; }
+.menu-button { cursor:default; }
 .phase-actions button, .phase-tools button { transition:background-color .2s,border-color .2s; }
 @media (max-height:500px) and (min-aspect-ratio:1/1) {
   .operator-board { grid-template-rows:44px minmax(0,1fr) 32px; }

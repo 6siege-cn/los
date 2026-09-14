@@ -34,10 +34,18 @@ try{
   browser=await chromium.launch({channel:'msedge',headless:true});
   const context=await browser.newContext({viewport:{width:1440,height:1000}});
   const page=await context.newPage(),errors=[];
+  async function selectRule(value){
+    await page.locator('.settings-button').click();
+    await page.locator('.rule-select').selectOption(value);
+    await page.getByRole('button',{name:'完成',exact:true}).click();
+  }
   page.on('pageerror',error=>errors.push(error.message));
   const coreCount=new Set([...Object.values(manifest.avatars),...Object.values(manifest.tokens),...Object.values(manifest.icons)]).size;
   const base=origin+'/los/operator-selection/';
   await page.goto(base+'index.html');
+  await page.locator('.menu-button').click();
+  assert.equal(await page.locator('dialog[open]').count(),0);
+  assert.equal(await page.locator('.phase-tools select').count(),0);
   for(const side of ['defense','attack']){
     await page.locator('#tab-'+side).click();
     assert.deepEqual(await page.locator('.operator-button').evaluateAll(buttons=>buttons.map(b=>b.dataset.operatorId)),sortOperators(operators.filter(op=>op.side===side)).map(op=>op.id));
@@ -142,7 +150,7 @@ try{
   assert.equal(await page.locator('#tab-attack').getAttribute('aria-pressed'),'true');
   assert.equal(await page.locator('.rule-select').isEnabled(),true);
   // Supply an additional rule only in this isolated test, exercising registry extension.
-  await page.locator('.rule-select').selectOption('fiveBan');
+  await selectRule('fiveBan');
   assert.equal(await page.locator('.ban-slot').count(),10);
   assert.equal(await page.locator('.sequence-track li').count(),20);
   for(let i=0;i<20;i++)await page.locator('.operator-button[aria-disabled="false"]').first().click();
@@ -166,7 +174,7 @@ try{
     await route.fulfill({response,body:await response.text()+`\nrules.fixture={...rules.standard,name:'测试规则',rounds:rules.standard.rounds.map(r=>({...r,side:opposite(r.side)}))};`});
   });
   await page.reload();
-  await page.locator('.rule-select').selectOption('fixture');
+  await selectRule('fixture');
   assert.ok((await page.locator('.phase-block').innerText()).includes('测试规则'));
   assert.ok((await page.locator('.phase-block strong').innerText()).startsWith('防守方'));
   await page.locator('.operator-button[aria-disabled="false"]').first().click();
@@ -184,7 +192,7 @@ try{
     await page.locator('#tab-'+side).click();
     assert.equal(await page.locator('.operator-button .variant').count(),0);
   }
-  await page.locator('.rule-select').selectOption('fiveBan');
+  await selectRule('fiveBan');
   await page.locator('.operator-button[aria-disabled="false"]').first().click();
   assert.equal(await page.locator('.settings-button').isDisabled(),true);
   assert.equal(await page.locator('.rule-select').isDisabled(),true);
@@ -199,6 +207,30 @@ try{
   assert.equal(await page.getByRole('checkbox',{name:'DIY',exact:true}).isChecked(),true);
   await page.getByRole('button',{name:'完成',exact:true}).click();
   assert.ok(await page.locator('.operator-button .variant').count()>0);
+  await page.locator('.settings-button').click();
+  assert.equal(await page.locator('.settings-section').count(),3);
+  await page.locator('.order-select').selectOption('time');
+  await page.getByRole('button',{name:'完成',exact:true}).click();
+  for(const side of ['attack','defense']){
+    await page.locator('#tab-'+side).click();
+    assert.deepEqual(await page.locator('.operator-button').evaluateAll(buttons=>buttons.map(b=>b.dataset.operatorId)),sortOperators(operators.filter(op=>op.side===side),'time').map(op=>op.id));
+  }
+  await page.locator('#tab-attack').click();
+  await page.locator('[data-operator-id="sledge"]').click();
+  assert.equal(await page.locator('.order-select').isDisabled(),true);
+  await page.locator('.order-select').evaluate(el=>{el.value='speedWeapon';el.dispatchEvent(new Event('change',{bubbles:true}));});
+  assert.equal(await page.locator('.order-select').inputValue(),'time');
+  await page.locator('.undo-button').click();
+  assert.equal(await page.locator('.order-select').isEnabled(),true);
+  await page.locator('.settings-button').click();
+  for(const [width,height] of [[1366,768],[390,844],[667,300]]){
+    await page.setViewportSize({width,height});
+    assert.equal(await page.locator('.settings-dialog').evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&el.scrollWidth<=el.clientWidth;}),true);
+    if(output)await page.screenshot({path:join(output,`settings-${width}x${height}.png`)});
+  }
+  await page.getByRole('button',{name:'完成',exact:true}).click();
+  await page.locator('.reset-button').click();
+  assert.equal(await page.locator('.order-select').inputValue(),'speedWeapon');
   assert.deepEqual(errors,[]);
   console.log(JSON.stringify({coreImages:coreCount,firstVisitNetworkRequests:firstRequests,repeatVisitImageDownloads:0,offlinePanel:true,offlineTokens:true,offlineFactionSwitch:true,layouts,pageErrors:errors}));
   await checkSkillPreview(page,output);

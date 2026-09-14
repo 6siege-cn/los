@@ -9,7 +9,22 @@ and the Ban & Pick action sequence.
 operator; recruit entries derive it from their `recruit_attack_*` or
 `recruit_defense_*` identifier.
 
-## 期望伤害（内部字段）
+## 矩阵排序与设置
+
+齿轮中的规则、范围和排序仅在选禁历史为空时可改，撤回全部操作后重新解锁。
+重置恢复标准规则、ALT/DIY 开启、默认“速度/枪械”。三横杠暂不绑定操作。
+
+- `speedWeapon`（速度/枪械）：HP 升序、同 HP 的 RECRUIT 排后，随后总/近/中/远期望伤害依次降序。
+- `time`（时间）：`operator-time-order.js` 保存用户两张截图从左至右、从上至下的完整名单，
+  进攻/防守各 38 个名字，排除 STRIKER/SENTRY。同名版本依次 OFF、ALT、DIY。
+  未匹配的名字放最后，按原始首次出现顺序分组，同名仍按版本排序。所有条件相同保持源顺序。
+
+名单包含尚未录入数据的 RAM、DEIMOS、RAUORA、SOLID SNAKE、TUBARÃO、SKOPÓS、DENARI、NOOR，
+仅预留位置，不生成可选干员。匹配忽略大小写、空格及重音，兼容 NØKK/NOKK、JÄGER/JAGER 等。
+名称核对来源：https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators
+其中截图防守方最后一个为 NOOR：https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators/noor
+
+## 期望伤害计算
 
 `operators.js` 为每个版本独立生成四个数值字段：`closeExpectedDamage`（近）、
 `mediumExpectedDamage`（中）、`longExpectedDamage`（远）、`totalExpectedDamage`（前三项之和，不取平均）。
