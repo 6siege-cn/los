@@ -14,4 +14,5 @@ export const assets = {
     rules:['rules-menu.svg',0], settings:['settings-gear.svg',0]
   }).map(([key,[file,rotation]])=>[key,{url:resolve(manifest.icons[file]),rotation}]))
 };
-export const settings = { rule: 'standard', colors: {attack:'#d2a83c',defense:'#589dd1'} };
+// Use the same theme tokens for scripted markers and stylesheet decorations.
+export const settings = { rule: 'standard', colors: {attack:'var(--attack)',defense:'var(--defense)'} };

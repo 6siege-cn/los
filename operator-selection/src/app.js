@@ -1,12 +1,15 @@
 import operators from '../data/operators.js?v=overview-audit-2';
-import {assets,settings} from './config.js?v=d035f7e5720d0198';
-import {rules,actions} from './rules.js';
+import {assets,settings} from './config.js?v=faction-colors-1';
+import {rules,actions} from './rules.js?v=five-ban-1';
 import {createDraft} from './engine.js';
 import {operatorFamily,versionLabel} from './identity.js';
 import {startImageCache} from './image-cache.js';
 import {fitCatalogue} from './responsive-grid.js';
 import {fitDetails} from './compact-details.js';
-let ruleId=settings.rule, rule=rules[ruleId], draft=createDraft(rule,operators);
+import {defaultScope,inScope} from './operator-scope.js';
+let scope={...defaultScope};
+const availableOperators=()=>operators.filter(op=>inScope(op,scope));
+let ruleId=settings.rule, rule=rules[ruleId], draft=createDraft(rule,availableOperators());
 const byId=new Map(operators.map(op=>[op.id,op]));
 const board=document.querySelector('.operator-board');
 let activeSide='attack';
@@ -44,6 +47,7 @@ function renderTeam(side,state){
   // Ban slots belong to the acting side; therefore contain enemy portraits.
   const banSlots=document.querySelector('.ban-side--'+side+' .ban-slots');banSlots.replaceChildren();
   const capacity=state.steps.filter(s=>s.side===side&&s.type==='ban').length;
+  banSlots.parentElement.dataset.banCount=capacity;
   for(let i=0;i<capacity;i++){const slot=node('span','ban-slot');const op=byId.get(state.bans[side][i]);if(op){slot.append(avatar(op));slot.title=sideName[side]+'禁用 '+op.name;}banSlots.append(slot);}
 }
 const pool=document.querySelector('.operator-pool');pool.replaceChildren();
@@ -62,7 +66,7 @@ function switchSide(side){scroll[activeSide]=grid.scrollTop;activeSide=side;rend
 function renderGrid(state){
   for(const b of tabs){const selected=b.dataset.side===activeSide;b.setAttribute('aria-pressed',String(selected));}
   grid.setAttribute('aria-labelledby','tab-'+activeSide);grid.replaceChildren();
-  for(const op of operators.filter(op=>op.side===activeSide)){
+  for(const op of availableOperators().filter(op=>op.side===activeSide)){
     const event=state.history.find(e=>operatorFamily(byId.get(e.operatorId))===operatorFamily(op)),button=node('button','operator-button');
     button.type='button';button.dataset.operatorId=op.id;button.append(avatar(op));
     const name=displayName(op),otherVersion=event&&event.operatorId!==op.id&&event.type==='pick';button.title=name;
@@ -87,20 +91,38 @@ reset.prepend(icon('reset'));
 undo.setAttribute('aria-label','撤回上一步');reset.setAttribute('aria-label','重置到初始状态');
 controls.append(undo,reset);phase.before(controls);
 const toolsCell=node('div','phase-tools'),settingsButton=node('button','settings-button');
-settingsButton.type='button';settingsButton.disabled=true;settingsButton.title='设置（暂未开放）';settingsButton.setAttribute('aria-label',settingsButton.title);settingsButton.append(icon('settings'));
+settingsButton.type='button';settingsButton.title='干员范围设置';settingsButton.setAttribute('aria-label',settingsButton.title);settingsButton.setAttribute('aria-haspopup','dialog');settingsButton.append(icon('settings'));
 toolsCell.append(ruleCell,settingsButton);phase.after(toolsCell);
+const scopeDialog=node('dialog','scope-dialog');scopeDialog.id='operator-scope';
+const scopeTitle=node('h2','','干员范围');scopeTitle.id='scope-title';scopeDialog.setAttribute('aria-labelledby',scopeTitle.id);
+scopeDialog.append(scopeTitle,node('p','','官方干员始终开放，以下版本可独立开关。'));
+const scopeInputs={};
+for(const key of Object.keys(defaultScope)){
+  const label=node('label','scope-option'),input=node('input');input.type='checkbox';input.checked=scope[key];input.name=key;
+  label.append(node('span','',key.toUpperCase()),input);scopeDialog.append(label);scopeInputs[key]=input;
+  input.addEventListener('change',()=>{
+    if(draft.snapshot().history.length){input.checked=scope[key];return;}
+    scope[key]=input.checked;restart(ruleId);
+  });
+}
+const closeScope=node('button','scope-close','完成');closeScope.type='button';closeScope.addEventListener('click',()=>scopeDialog.close());scopeDialog.append(closeScope);document.body.append(scopeDialog);
+settingsButton.setAttribute('aria-controls',scopeDialog.id);
+settingsButton.addEventListener('click',()=>{if(!draft.snapshot().history.length)scopeDialog.showModal();});
 function restart(id){
-  ruleId=id;rule=rules[id];draft=createDraft(rule,operators);
+  ruleId=id;rule=rules[id];draft=createDraft(rule,availableOperators());
   activeSide='attack';scroll.attack=0;scroll.defense=0;render();
 }
 ruleSelect.addEventListener('change',()=>{
   if(draft.snapshot().history.length||!Object.hasOwn(rules,ruleSelect.value)){ruleSelect.value=ruleId;return;}
   restart(ruleSelect.value);
 });
-reset.addEventListener('click',()=>restart(settings.rule));
+reset.addEventListener('click',()=>{scope={...defaultScope};scopeDialog.close();restart(settings.rule);});
 function render(){
   const state=draft.snapshot();for(const side of ['attack','defense'])renderTeam(side,state);
   ruleSelect.value=ruleId;ruleSelect.disabled=state.history.length>0;
+  settingsButton.disabled=state.history.length>0;
+  settingsButton.title=settingsButton.disabled?'撤回全部操作或重置后可修改干员范围':'干员范围设置';
+  for(const [key,input] of Object.entries(scopeInputs)){input.checked=scope[key];input.disabled=settingsButton.disabled;}
   ruleCell.classList.toggle('is-locked',ruleSelect.disabled);
   ruleCell.title=ruleSelect.disabled?'撤回全部操作或重置后可更换规则':'选择生效规则';
   track.style.gridTemplateColumns=`repeat(${state.timeline.length},minmax(0,1fr))`;

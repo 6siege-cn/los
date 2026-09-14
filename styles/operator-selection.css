@@ -8,8 +8,8 @@
   --panel-soft: #191e23;
   --line: #3b434b;
   --line-soft: #262d33;
-  --attack: #b49236;
-  --defense: #4f7f9d;
+  --attack: #009BCB;
+  --defense: #E48B00;
   --muted: #7f8992;
 }
 
@@ -414,6 +414,13 @@ body { margin:0; }
 .phase-actions .reset-button .ui-icon { width:18px; height:18px; }
 .phase-actions .undo-button .ui-icon, .phase-actions .reset-button .ui-icon, .phase-tools .ui-icon { width:24px; height:24px; }
 .settings-button:disabled { opacity:.45; }
+.scope-dialog { margin:auto; width:min(340px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); overflow:auto; padding:16px; border:1px solid var(--line); background:var(--panel); color:var(--r6s-text); }
+.scope-dialog::backdrop { background:#000a; }
+.scope-dialog h2 { margin:0 0 8px; font-size:18px; }
+.scope-dialog p { margin:0 0 12px; font-size:12px; color:var(--muted); }
+.scope-option { display:flex; align-items:center; justify-content:space-between; min-height:48px; padding:6px 12px; margin-top:6px; border:1px solid var(--line); background:var(--panel-soft); cursor:pointer; }
+.scope-option input { width:22px; height:22px; margin:0; accent-color:var(--r6s-highlight); }
+.scope-close { display:block; min-height:44px; width:100%; margin-top:12px; }
 .phase-actions button, .phase-tools button { transition:background-color .2s,border-color .2s; }
 @media (max-height:500px) and (min-aspect-ratio:1/1) {
   .operator-board { grid-template-rows:44px minmax(0,1fr) 32px; }
@@ -443,13 +450,19 @@ body { margin:0; }
 /* Faction switching lives on the ban strip; the catalogue gets the whole pool. */
 .operator-pool { grid-template-rows:minmax(0,1fr); gap:0; }
 .ban-side { position:relative; min-width:0; min-height:44px; border-radius:0; overflow:hidden; touch-action:manipulation; }
-.ban-side--attack { --faction-color:var(--attack); color:var(--attack); background:#302a18; }
-.ban-side--defense { --faction-color:var(--defense); color:var(--defense); background:#192c38; }
+.ban-side--attack { --faction-color:var(--attack); color:var(--attack); background:color-mix(in srgb,var(--attack) 18%,var(--panel)); }
+.ban-side--defense { --faction-color:var(--defense); color:var(--defense); background:color-mix(in srgb,var(--defense) 18%,var(--panel)); }
 .ban-side > .ui-icon { position:absolute; inset:0; margin:auto; width:80%; height:90%; opacity:.25; pointer-events:none; }
 .ban-side .ban-slots { position:relative; z-index:1; pointer-events:none; }
 .ban-side:hover { background:color-mix(in srgb,var(--faction-color) 24%,var(--panel)); }
 .ban-side[aria-pressed="true"] { box-shadow:inset 0 -3px var(--faction-color); border-color:var(--faction-color); }
 .ban-side:focus-visible { outline:2px solid white; outline-offset:-3px; }
+.ban-side[data-ban-count="5"] { container-type:inline-size; }
+.ban-side[data-ban-count="5"] .ban-slots span { width:min(44px,calc((100cqw - 24px) / 5)); }
+@media (max-width:600px) and (max-aspect-ratio:1/1) {
+  .ban-side[data-ban-count="5"] .ban-slots { display:grid; grid-template-columns:repeat(3,20px); gap:1px; }
+  .ban-side[data-ban-count="5"] .ban-slots span { width:20px; }
+}
 @media (max-width:600px) and (max-aspect-ratio:1/1) {
   .operator-board { grid-template-rows:94px minmax(0,1fr) 32px; }
   .ban-region { grid-template-columns:minmax(0,1fr) minmax(104px,1.2fr) minmax(0,1fr); grid-template-rows:44px 44px; align-content:space-between; }

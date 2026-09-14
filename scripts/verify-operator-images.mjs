@@ -45,6 +45,11 @@ try{
     return navigator.serviceWorker.controller&&name&&(await (await caches.open(name)).keys()).length===expected;
   },coreCount,{timeout:60000});
   await page.locator('[data-operator-id="sledge"]').click();
+  await page.locator('#tab-attack').click();
+  assert.equal(await page.locator('.operator-button.is-pick > .ui-icon').first().evaluate(el=>getComputedStyle(el).color),'rgb(0, 155, 203)');
+  assert.equal(await page.locator('#tab-attack').evaluate(el=>getComputedStyle(el).color),'rgb(0, 155, 203)');
+  assert.equal(await page.locator('#tab-defense').evaluate(el=>getComputedStyle(el).color),'rgb(228, 139, 0)');
+  await page.locator('#tab-defense').click();
   await page.waitForFunction(()=>[...document.images].every(img=>img.complete&&img.naturalWidth>0));
   const firstRequests=imageRequests.length;
   imageRequests.length=0;
@@ -128,7 +133,26 @@ try{
   assert.equal(await page.locator('#tab-attack').getAttribute('aria-pressed'),'true');
   assert.equal(await page.locator('.rule-select').isEnabled(),true);
   // Supply an additional rule only in this isolated test, exercising registry extension.
-  await page.route('**/rules.js',async route=>{
+  await page.locator('.rule-select').selectOption('fiveBan');
+  assert.equal(await page.locator('.ban-slot').count(),10);
+  assert.equal(await page.locator('.sequence-track li').count(),20);
+  for(let i=0;i<20;i++)await page.locator('.operator-button:not(:disabled)').first().click();
+  assert.equal(await page.locator('.panel-link').count(),10);
+  assert.equal(await page.locator('.ban-slot img').count(),10);
+  for(const [width,height] of [[320,568],[390,844],[667,300],[1366,768]]){
+    await page.setViewportSize({width,height});
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    assert.equal(await page.locator('.ban-side').evaluateAll(sides=>sides.every(side=>{
+      const b=side.getBoundingClientRect();return [...side.querySelectorAll('.ban-slot')].every(slot=>{const r=slot.getBoundingClientRect();return r.left>=b.left&&r.right<=b.right&&r.top>=b.top&&r.bottom<=b.bottom;});
+    })),true,`Five bans must fit at ${width}x${height}`);
+    if(output)await page.screenshot({path:join(output,`five-ban-${width}x${height}.png`),fullPage:true});
+  }
+  for(let i=0;i<20;i++)await page.locator('.undo-button').click();
+  assert.equal(await page.locator('.panel-link,.ban-slot img,.info-card img').count(),0);
+  assert.equal(await page.locator('.rule-select').isEnabled(),true);
+  await page.locator('.reset-button').click();
+  assert.equal(await page.locator('.rule-select').inputValue(),'standard');
+  await page.route('**/rules.js*',async route=>{
     const response=await route.fetch();
     await route.fulfill({response,body:await response.text()+`\nrules.fixture={...rules.standard,name:'测试规则',rounds:rules.standard.rounds.map(r=>({...r,side:opposite(r.side)}))};`});
   });
@@ -140,6 +164,32 @@ try{
   assert.equal(await page.locator('.rule-select').isDisabled(),true);
   await page.locator('.reset-button').click();
   assert.equal(await page.locator('.rule-select').inputValue(),'standard');
+  assert.deepEqual(errors,[]);
+  await page.locator('.settings-button').click();
+  await page.getByRole('checkbox',{name:'ALT',exact:true}).uncheck();
+  assert.equal(await page.getByRole('checkbox',{name:'DIY',exact:true}).isChecked(),true);
+  await page.getByRole('checkbox',{name:'DIY',exact:true}).uncheck();
+  if(output)await page.screenshot({path:join(output,'scope-settings.png'),fullPage:true});
+  await page.getByRole('button',{name:'完成',exact:true}).click();
+  for(const side of ['attack','defense']){
+    await page.locator('#tab-'+side).click();
+    assert.equal(await page.locator('.operator-button .variant').count(),0);
+  }
+  await page.locator('.rule-select').selectOption('fiveBan');
+  await page.locator('.operator-button:not(:disabled)').first().click();
+  assert.equal(await page.locator('.settings-button').isDisabled(),true);
+  assert.equal(await page.locator('.rule-select').isDisabled(),true);
+  await page.locator('.undo-button').click();
+  assert.equal(await page.locator('.settings-button').isEnabled(),true);
+  await page.locator('.settings-button').click();
+  assert.equal(await page.getByRole('checkbox',{name:'ALT',exact:true}).isChecked(),false);
+  await page.keyboard.press('Escape');
+  await page.locator('.reset-button').click();
+  await page.locator('.settings-button').click();
+  assert.equal(await page.getByRole('checkbox',{name:'ALT',exact:true}).isChecked(),true);
+  assert.equal(await page.getByRole('checkbox',{name:'DIY',exact:true}).isChecked(),true);
+  await page.getByRole('button',{name:'完成',exact:true}).click();
+  assert.ok(await page.locator('.operator-button .variant').count()>0);
   assert.deepEqual(errors,[]);
   console.log(JSON.stringify({coreImages:coreCount,firstVisitNetworkRequests:firstRequests,repeatVisitImageDownloads:0,offlinePanel:true,offlineTokens:true,offlineFactionSwitch:true,layouts,pageErrors:errors}));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
