@@ -50,7 +50,11 @@ export function installSkillPreview(board,{byId,avatarURL}){
   for(const type of ['pointerup','pointercancel'])document.addEventListener(type,cancel,true);
   // A successful long press must never bubble into pick/ban, faction switch or panel navigation.
   document.addEventListener('click',event=>{if(suppressClick){suppressClick=false;event.preventDefault();event.stopImmediatePropagation();}},true);
-  board.addEventListener('contextmenu',event=>{if(event.target.closest('[data-skill-id]'))event.preventDefault();});
+  // Capture before browser image/link handling, including the selected portrait's outer control.
+  for(const type of ['contextmenu','selectstart','dragstart'])document.addEventListener(type,event=>{
+    const target=event.target instanceof Element?event.target:event.target.parentElement;
+    if(target?.closest('[data-skill-id], .panel-link')){event.preventDefault();event.stopImmediatePropagation();}
+  },{capture:true,passive:false});
   board.addEventListener('keydown',event=>{
     const target=event.target.closest('[data-skill-id]');
     if(target&&event.key==='F1'){event.preventDefault();show(target);}

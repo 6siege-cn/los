@@ -16,6 +16,10 @@ export async function checkSkillPreview(page,output){
   assert.equal(await dialog.evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight;}),true);
   if(output)await page.screenshot({path:join(output,'skill-desktop.png')});await close();
   await page.locator('[data-operator-id="sledge"]').click();assert.equal(await history(),1);
+  assert.equal(await page.locator('.panel-link').first().evaluate(el=>el.tagName),'BUTTON');
+  for(const selector of ['[data-operator-id="smoke"]','.panel-link']){
+    assert.equal(await page.locator(selector).first().evaluate(el=>['contextmenu','selectstart','dragstart'].every(type=>!el.dispatchEvent(new Event(type,{bubbles:true,cancelable:true})))),true);
+  }
   const pages=page.context().pages().length;
   await hold(page.locator('.panel-link [data-skill-id="sledge"]'));
   assert.equal(page.context().pages().length,pages);assert.equal(await history(),1);await close();
@@ -40,6 +44,8 @@ export async function checkSkillPreview(page,output){
     const target=touch.locator('[data-operator-id="brava"]');await target.waitFor();await target.scrollIntoViewIfNeeded();
     const cdp=await mobile.newCDPSession(touch);
     const box=await target.boundingBox(),point={x:box.x+box.width/2,y:box.y+box.height/2};
+    assert.equal(await touch.evaluate(({x,y})=>document.elementFromPoint(x,y).tagName,point),'BUTTON');
+    assert.equal(await target.locator('img').evaluate(el=>getComputedStyle(el).pointerEvents),'none');
     await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});
     await touch.waitForTimeout(520);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
     await touch.locator('.skill-preview').waitFor({state:'visible'});

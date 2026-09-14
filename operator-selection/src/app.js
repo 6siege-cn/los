@@ -7,7 +7,7 @@ import {startImageCache} from './image-cache.js';
 import {fitCatalogue} from './responsive-grid.js';
 import {fitDetails} from './compact-details.js';
 import {defaultScope,inScope} from './operator-scope.js';
-import {installSkillPreview} from './skill-preview.js';
+import {installSkillPreview} from './skill-preview.js?v=native-menu-2';
 let scope={...defaultScope};
 const availableOperators=()=>operators.filter(op=>inScope(op,scope));
 let ruleId=settings.rule, rule=rules[ruleId], draft=createDraft(rule,availableOperators());
@@ -41,7 +41,7 @@ function renderTeam(side,state){
   for(let i=0;i<rule.teamSize;i++){
     const op=byId.get(state.picks[side][i]),row=node('article','team-row'),slot=node('div','operator-slot');
     if(op){slot.dataset.skillId=op.id;slot.append(avatar(op));appendVersion(slot,op);slot.title=displayName(op); // The CSV owns the panel source.
-      const link=node('a','panel-link');link.href=assets.panelURL(op.panel);link.target='_blank';link.rel='noopener';link.title='查看 '+op.name+' 干员面板';link.setAttribute('aria-label',link.title);link.append(slot);row.append(link);
+      const link=node('button','panel-link');link.type='button';link.title='查看 '+op.name+' 干员面板';link.setAttribute('aria-label',link.title);link.addEventListener('click',()=>window.open(assets.panelURL(op.panel),'_blank','noopener'));link.append(slot);row.append(link);
     } else row.append(slot);
     row.append(card(op));list.append(row);
   }

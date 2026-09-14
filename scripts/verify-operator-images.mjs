@@ -58,7 +58,9 @@ try{
   await page.locator('[data-operator-id="sledge"]').click();
   await page.waitForFunction(()=>[...document.images].every(img=>img.complete&&img.naturalWidth>0));
   assert.equal(imageRequests.length,0,'Repeat visit must avoid image network downloads');
-  const panel=await page.locator('.panel-link').first().getAttribute('href');
+  await page.evaluate(()=>{window.originalOpen=window.open;window.open=url=>{window.openedPanel=url;return null;};});
+  await page.locator('.panel-link').first().click();
+  const panel=await page.evaluate(()=>{window.open=window.originalOpen;return window.openedPanel;});
   assert.ok(panel.endsWith('.webp'));
   assert.equal(await page.evaluate(async url=>(await fetch(url)).status,panel),200);
   assert.equal(imageRequests.length,1,'Only the opened panel should load');

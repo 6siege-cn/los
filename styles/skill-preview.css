@@ -1,4 +1,7 @@
-[data-skill-id] { -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
+[data-skill-id], [data-skill-id] *, .panel-link { -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
+/* Hit-test the control, never its image/text: mobile browsers otherwise offer image saving or smart copy. */
+[data-skill-id] img, [data-skill-id] .variant, [data-skill-id] .ui-icon { pointer-events:none; -webkit-user-drag:none; }
+button.panel-link { padding:0; border:0; border-radius:0; background:transparent; color:inherit; font:inherit; text-align:inherit; transition:none; }
 .skill-preview { position:fixed; margin:0; padding:0; width:min(360px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); border:1px solid var(--line); border-top:3px solid var(--skill-side); border-radius:8px; color:var(--r6s-text); background:var(--panel); box-shadow:0 8px 32px #0009; overflow:hidden; }
 .skill-preview[open] { display:flex; flex-direction:column; }
 .skill-preview::backdrop { background:transparent; }
