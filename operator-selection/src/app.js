@@ -9,6 +9,7 @@ import {fitDetails} from './compact-details.js';
 import {defaultScope,inScope} from './operator-scope.js';
 import {sortOperators,orderModes,defaultOrder} from './operator-order.js?v=unified-settings-1';
 import {installSkillPreview} from './skill-preview.js?v=native-menu-2';
+import {storageKey,captureDraft,restoreDraft,createDraftStorage} from './draft-storage.js';
 let scope={...defaultScope};
 let orderMode=defaultOrder;
 const availableOperators=()=>operators.filter(op=>inScope(op,scope));
@@ -18,6 +19,43 @@ const board=document.querySelector('.operator-board');
 let activeSide='attack';
 const scroll={attack:0,defense:0};
 const sideName={attack:'进攻方',defense:'防守方'};
+let persistence=null,saveReady=false;
+function storageNotice(message,action){
+  let dialog=document.querySelector('.storage-dialog');
+  if(!dialog){dialog=node('dialog','scope-dialog storage-dialog');dialog.setAttribute('aria-label','本局保存提示');document.body.append(dialog);}
+  dialog.replaceChildren(node('h2','','本局保存提示'),node('p','',message));
+  const button=node('button','scope-close',action?'载入最新记录':'知道了');button.type='button';
+  button.addEventListener('click',()=>action?action():dialog.close());dialog.append(button);
+  dialog.oncancel=event=>{if(action)event.preventDefault();};
+  if(!dialog.open)dialog.showModal();
+}
+function persist(){
+  if(saveReady&&persistence)persistence.save(captureDraft({ruleId,rule,scope,orderMode,activeSide,draft,operators}));
+}
+function restoreSaved(){
+  try{
+    persistence=createDraftStorage({storage:localStorage,locks:navigator.locks,
+      onConflict:()=>{saveReady=false;storageNotice('另一个页面已修改本局。为避免覆盖，请载入最新记录后继续。',()=>location.reload());},
+      onError:()=>{saveReady=false;storageNotice('浏览器无法保存本局。当前仍可操作，但刷新或关闭后可能丢失进度。');}});
+    const record=persistence.read();
+    if(record!==null){
+      try{
+        const saved=restoreDraft(record,{rules,orderModes,operators});
+        ({draft,ruleId,scope,orderMode,activeSide}=saved);rule=rules[ruleId];
+      }catch{
+        storageNotice('保存记录无法恢复，可能是规则、干员数据更新或记录损坏。确认后清除旧记录并开始新局。',async()=>{if(await persistence.save(null))location.reload();});
+        document.querySelector('.storage-dialog button').textContent='清除旧记录，开始新局';return;
+      }
+    }
+    saveReady=true;
+  }catch(error){
+    // A malformed JSON record is preserved until the user explicitly clears it.
+    if(error instanceof SyntaxError&&persistence){storageNotice('保存记录损坏，无法恢复。确认后清除旧记录并开始新局。',async()=>{if(await persistence.save(null))location.reload();});document.querySelector('.storage-dialog button').textContent='清除旧记录，开始新局';}
+    else {persistence=null;storageNotice('浏览器不允许本地存储。当前仍可操作，但刷新后无法保留进度。');}
+  }
+}
+window.addEventListener('storage',event=>{if(event.key===storageKey||event.key===null)persistence?.check();});
+window.addEventListener('focus',()=>persistence?.check());
 function node(tag,className='',text='') {const el=document.createElement(tag);el.className=className;el.textContent=text;return el;}
 function icon(key) {
   const el=node('span','ui-icon');el.setAttribute('aria-hidden','true');
@@ -65,7 +103,7 @@ for(const side of ['attack','defense']){
   tabs.push(button);
 }
 const grid=node('div','operator-grid');grid.id='operator-list';grid.setAttribute('role','region');grid.tabIndex=0;pool.append(grid);
-function switchSide(side){scroll[activeSide]=grid.scrollTop;activeSide=side;renderGrid(draft.snapshot());}
+function switchSide(side){scroll[activeSide]=grid.scrollTop;activeSide=side;renderGrid(draft.snapshot());persist();}
 function renderGrid(state){
   for(const b of tabs){const selected=b.dataset.side===activeSide;b.setAttribute('aria-pressed',String(selected));}
   grid.setAttribute('aria-labelledby','tab-'+activeSide);grid.replaceChildren();
@@ -132,7 +170,7 @@ ruleSelect.addEventListener('change',()=>{
   if(draft.snapshot().history.length||!Object.hasOwn(rules,ruleSelect.value)){ruleSelect.value=ruleId;return;}
   restart(ruleSelect.value);
 });
-reset.addEventListener('click',()=>{scope={...defaultScope};orderMode=defaultOrder;scopeDialog.close();restart(settings.rule);});
+reset.addEventListener('click',()=>{const ready=saveReady;saveReady=false;scope={...defaultScope};orderMode=defaultOrder;scopeDialog.close();restart(settings.rule);saveReady=ready;if(ready)persistence?.save(null);});
 function render(){
   const state=draft.snapshot();for(const side of ['attack','defense'])renderTeam(side,state);
   ruleSelect.value=ruleId;ruleSelect.disabled=state.history.length>0;
@@ -144,9 +182,12 @@ function render(){
   const tasks=[...new Set(state.available.map(s=>s.type))].map(type=>actions[type].label+' '+state.available.filter(s=>s.type===type).length);
   phase.replaceChildren(node('span','eyebrow',rule.name),node('strong','',state.step?sideName[state.step.side]+' · '+tasks.join(' / '):'选用完成'),node('span','timer-placeholder',state.step?'第 '+state.step.round+' / '+rule.rounds.length+' 轮 · 顺序不限':'5 对 5'));
   track.replaceChildren();state.timeline.forEach((step,i)=>{const current=i>=state.history.length&&step.round===state.step?.round;const li=node('li',i<state.history.length?'done':current?'current':'');li.style.setProperty('--owner-color',settings.colors[step.side]);li.title=sideName[step.side]+' '+actions[step.type].label+sideName[step.target];li.setAttribute('aria-label',li.title);if(current)li.setAttribute('aria-current','step');li.append(icon(step.type));track.append(li);});
-  undo.disabled=!state.history.length;renderGrid(state);
+  undo.disabled=!state.history.length;renderGrid(state);persist();
 }
+restoreSaved();
+const restoredReady=saveReady;saveReady=false;
 render();
+saveReady=restoredReady;
 installSkillPreview(board,{byId,avatarURL:assets.avatarURL});
 fitDetails(document.querySelector('.selection-region'));
 fitCatalogue(grid);

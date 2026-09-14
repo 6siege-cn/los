@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import manifest from '../operator-selection/src/asset-manifest.js';
 import {checkSkillPreview} from './check-skill-preview.mjs';
+import {checkDraftStorage} from './check-draft-storage.mjs';
 import operators from '../operator-selection/data/operators.js';
 import {sortOperators} from '../operator-selection/src/operator-order.js';
 const require=createRequire(import.meta.url);
@@ -69,7 +70,8 @@ try{
   const firstRequests=imageRequests.length;
   imageRequests.length=0;
   await page.reload();
-  await page.locator('[data-operator-id="sledge"]').click();
+  assert.equal(await page.locator('.panel-link [data-skill-id="sledge"]').count(),1);
+  assert.equal(await page.locator('#tab-defense').getAttribute('aria-pressed'),'true');
   await page.waitForFunction(()=>[...document.images].every(img=>img.complete&&img.naturalWidth>0));
   assert.equal(imageRequests.length,0,'Repeat visit must avoid image network downloads');
   await page.evaluate(()=>{window.originalOpen=window.open;window.open=url=>{window.openedPanel=url;return null;};});
@@ -236,4 +238,7 @@ try{
   await checkSkillPreview(page,output);
   assert.deepEqual(errors,[]);
   console.log('Skill preview: mouse, touch, disabled portraits, selected/banned slots, ALT, fallback and drag cancellation passed.');
+  await checkDraftStorage(page);
+  assert.deepEqual(errors,[]);
+  console.log('Draft persistence: refresh, undo, settings, reset, conflicts and corrupt records passed.');
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

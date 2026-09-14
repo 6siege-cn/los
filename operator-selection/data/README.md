@@ -9,7 +9,16 @@ and the Ban & Pick action sequence.
 operator; recruit entries derive it from their `recruit_attack_*` or
 `recruit_defense_*` identifier.
 
-## 矩阵排序与设置
+## 本机进度保存
+
+选禁、撤回、设置和阵营切换后自动保存到本网站的 localStorage，键为
+`six-siege-los:operator-draft:v1`。只保存规则/范围/排序、当前阵营和有序历史，
+刷新时通过引擎重放历史，重建头像、状态及完整撤回链。重置删除记录。
+存档带格式版本、规则签名和已操作干员的数据签名；不兼容或损坏时要求明确确认后清除，
+不会静默覆盖。其他页面修改后提示载入最新记录，保存前再次比较，并在支持时通过 Web Locks 串行写入。
+存储被禁用或容量不足时提示不能保存，当前会话仍可继续。没有跨设备同步，也不能抵抗用户清理网站数据。
+
+## 设置与排序模式
 
 齿轮中的规则、范围和排序仅在选禁历史为空时可改，撤回全部操作后重新解锁。
 重置恢复标准规则、ALT/DIY 开启、默认“速度/枪械”。三横杠暂不绑定操作。
