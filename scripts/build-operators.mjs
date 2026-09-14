@@ -1,5 +1,6 @@
 import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {calculateExpectedDamage} from '../operator-selection/src/expected-damage.js';
 export function parseCSV(text) {
   const rows=[];let row=[],cell='',quoted=false;
   for(let i=0;i<text.length;i++){
@@ -21,7 +22,8 @@ export function readOperators() {
   }
   return rows.map(row=>{
     const original=row.version==='alt'?rows.find(base=>base.version==='off'&&base.name===row.name&&base.side===row.side):row;
-    return {...row,...Object.fromEntries(['close','medium','long'].map(key=>[key,JSON.parse(row[key])])),skill:skillData[original?.id]??null};
+    const operator={...row,...Object.fromEntries(['close','medium','long'].map(key=>[key,JSON.parse(row[key])])),skill:skillData[original?.id]??null};
+    return {...operator,...calculateExpectedDamage(operator)};
   });
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)) {

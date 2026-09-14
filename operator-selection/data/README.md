@@ -9,7 +9,16 @@ and the Ban & Pick action sequence.
 operator; recruit entries derive it from their `recruit_attack_*` or
 `recruit_defense_*` identifier.
 
-## 技能描述
+## 期望伤害（内部字段）
+
+`operators.js` 为每个版本独立生成四个数值字段：`closeExpectedDamage`（近）、
+`mediumExpectedDamage`（中）、`longExpectedDamage`（远）、`totalExpectedDamage`（前三项之和，不取平均）。
+黄骰 = 1，橙骰 = 1.5，红骰 = 2，裂黄/裂橙/裂红骰均 = 0；每个距离按其骰子数组求和。
+空数组为 0，未知骰子会报错，避免静默生成错误数据。ALT 使用自身骰子，不继承 OFF 的伤害。
+计算函数在 `src/expected-damage.js`，每次 `npm run build-operators` 自动重算，
+无需在 CSV 重复维护派生数值。暂不展示，也不计入技能、血量或破坏等级。
+
+## 技能文本格式
 
 每个干员仅有一个 `skill` 文本字段，段落以换行分隔。技能名称或标题备注（如果原文有）
 放在首行；不再分开保存名称、段落数组、正文和来源对象。

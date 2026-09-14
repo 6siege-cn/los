@@ -1,4 +1,4 @@
-import operators from '../data/operators.js?v=skill-preview-1';
+import operators from '../data/operators.js?v=expected-damage-1';
 import {assets,settings} from './config.js?v=faction-colors-1';
 import {rules,actions} from './rules.js?v=five-ban-1';
 import {createDraft} from './engine.js';

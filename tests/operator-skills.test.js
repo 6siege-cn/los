@@ -37,7 +37,7 @@ test('all ALT operators share the exact skill text of their same-name OFF versio
 test('skill normalization leaves existing stats, versions and assets unchanged',()=>{
   const rows=parseCSV(readFileSync(new URL('operators.csv',data),'utf8'));
   for(const row of rows){
-    const {skill,...op}=operators.find(op=>op.id===row.id);
+    const {skill,closeExpectedDamage,mediumExpectedDamage,longExpectedDamage,totalExpectedDamage,...op}=operators.find(op=>op.id===row.id);
     for(const k of ['close','medium','long'])row[k]=JSON.parse(row[k]);
     assert.deepEqual(op,row);
   }
