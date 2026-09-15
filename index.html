@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta
       name="description"
       content="《彩虹六号：围攻》桌游视线测量工具"
@@ -11,9 +11,10 @@
     <title>彩虹六号：围攻 — 视线测量工具</title>
     <link rel="stylesheet" href="./styles/base.css" />
     <link rel="stylesheet" href="./styles/standalone.css?v=20260907.2" />
-    <script type="module" src="./scripts/app.js?v=20260903.6"></script>
+    <link rel="stylesheet" href="./styles/los-workspace.css?v=1" />
+    <script type="module" src="./scripts/app.js?v=los-workspace-1"></script>
   </head>
-  <body>
+  <body class="los-page">
     <div class="hidden-layout">
       <header class="hidden-header">
         <div class="header-logo">
@@ -35,27 +36,27 @@
         <section class="los-tool" aria-label="视线测量">
           <section class="tactical-panel tactical-panel-hex">
             <div class="tactical-panel-header">
-              <h3 class="tactical-panel-title">选择地图</h3>
+              <h3 class="tactical-panel-title">视线测量</h3>
               <div class="los-map-selector">
                 <label class="sr-only" for="map-select">地图</label>
                 <select id="map-select" class="tactical-select"></select>
               </div>
-            </div>
-
-            <div class="tactical-panel-body los-calculator-embed">
-              <div class="calculator-page">
-                <div id="canvas-wrapper" class="canvas-wrapper">
                   <div class="zoom-controls" aria-label="地图缩放">
-                    <button id="zoom-out" type="button" title="缩小地图">
+                    <button id="zoom-out" type="button" title="缩小地图" aria-label="缩小地图">
                       <span aria-hidden="true">−</span>
                     </button>
                     <button id="zoom-reset" type="button" title="重置缩放">
                       100%
                     </button>
-                    <button id="zoom-in" type="button" title="放大地图">
+                    <button id="zoom-in" type="button" title="放大地图" aria-label="放大地图">
                       <span aria-hidden="true">+</span>
                     </button>
                   </div>
+            </div>
+
+            <div class="tactical-panel-body los-calculator-embed">
+              <div class="calculator-page">
+                <div id="canvas-wrapper" class="canvas-wrapper">
                   <div id="canvas-container" class="canvas-container">
                     <canvas
                       id="map-canvas"
@@ -63,7 +64,6 @@
                       height="600"
                       aria-label="交互式地图：轻触放置，单指拖动平移，双指缩放"
                     ></canvas>
-                    <div id="drag-tooltip" class="drag-tooltip visible"></div>
                   </div>
                 </div>
 
@@ -74,6 +74,7 @@
                 <div class="player-spacer"></div>
                 <div class="calculator-controls">
                   <div class="player-controls">
+                    <div id="drag-tooltip" class="drag-tooltip visible" role="status" aria-live="polite"></div>
                     <div
                       id="los-result"
                       class="los-result"

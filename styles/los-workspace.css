@@ -1,0 +1,90 @@
+/* Scoped workspace: keep the shared navigation and other tools unaffected. */
+.los-page { color-scheme: dark; background: #090b0d; color: #dfe4e8; --accent-blue: #009bcb; --accent-orange: #e48b00; --border: #3b434b; --text-secondary: #a4aeb7; }
+.los-page * { box-sizing: border-box; }
+.los-page .hidden-layout { height: 100vh; height: 100dvh; min-height: 560px; background: #0d1013; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+.los-page .hidden-header, .los-page .hidden-footer { display: none; }
+.los-page .hidden-nav { flex: 0 0 auto; background: #13171b; box-shadow: none; }
+.los-page .hidden-nav ul { flex-direction: row; max-width: none; }
+.los-page .hidden-nav li { max-width: none; }
+.los-page .hidden-nav a { min-height: 44px; padding: 10px 8px; font-size: 13px; border-left: 0; }
+.los-page .hidden-nav a.active-nav-link { color: #fff; background: #191e23; border-bottom: 3px solid #009bcb; }
+.los-page .hidden-nav a::after { display: none; }
+.los-page .hidden-content { flex: 1; min-height: 0; width: 100%; max-width: none; padding: 8px; overflow: visible; background: none; animation: none; }
+.los-page .los-tool, .los-page .tactical-panel { height: 100%; min-height: 0; margin: 0; }
+.los-page .tactical-panel { display: flex; flex-direction: column; background: #13171b; border: 1px solid #3b434b; border-radius: 0; box-shadow: none; overflow: hidden; }
+.los-page .tactical-panel::before, .los-page .tactical-panel::after { display: none; }
+.los-page .tactical-panel-header { display: flex; flex-direction: row; flex: 0 0 auto; align-items: center; gap: 12px; padding: 8px; background: #191e23; border-bottom: 1px solid #3b434b; }
+.los-page .tactical-panel-title::before { display: none; }
+.los-page .tactical-panel-title { flex: 0 0 auto; margin: 0; padding: 0; border: 0; font-size: 15px; letter-spacing: .06em; }
+.los-page .los-map-selector { flex: 1; min-width: 0; width: auto; max-width: 420px; }
+.los-page .tactical-select { width: 100%; min-width: 0; height: 44px; border: 1px solid #3b434b; border-radius: 2px; padding: 0 28px 0 10px; background-color: #101418; color: #dfe4e8; font-size: 16px; }
+.los-page .zoom-controls { position: static; margin: 0 0 0 auto; float: none; padding: 0; display: flex; gap: 4px; background: none; box-shadow: none; }
+.los-page button { touch-action: manipulation; user-select: none; -webkit-user-select: none; border-radius: 2px; transition: background-color .15s; }
+.los-page button:focus-visible, .los-page select:focus-visible { outline: 2px solid white; outline-offset: -4px; }
+.los-page .zoom-controls button { width: 44px; height: 44px; min-height: 44px; background: #252c33; border: 1px solid #3b434b; }
+.los-page .zoom-controls button:nth-child(2) { min-width: 60px; font-size: 13px; }
+.los-page .los-calculator-embed { flex: 1; min-height: 0; padding: 0; }
+.los-page .calculator-page { height: 100%; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 270px; grid-template-rows: minmax(0, 1fr); gap: 8px; padding: 8px; }
+.los-page .canvas-wrapper { width: 100%; height: 100%; min-height: 0; max-height: none; border: 1px solid #3b434b; border-radius: 0; background: #090b0d; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #59636d #13171b; box-shadow: none; }
+.los-page .canvas-container { min-height: 100%; }
+.los-page .player-spacer, .los-page .mobile-map-help { display: none; }
+.los-page .calculator-controls { position: static; width: auto; min-width: 0; max-height: none; overflow: auto; scrollbar-width: thin; padding: 10px; border: 1px solid #3b434b; background: #191e23; border-radius: 0; box-shadow: none; }
+.los-page .player-controls { gap: 12px; }
+.los-page .drag-tooltip { position: static; display: block; opacity: 1; padding: 0; max-width: none; background: none; color: #a4aeb7; font-size: 12px; line-height: 1.5; }
+.los-page .controls-main { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.los-page .controls-main button { min-height: 52px; padding: 8px 4px; font-size: 13px; font-weight: 700; }
+.los-page .blue-button, .los-page .blue-button:hover { background: #009bcb24; border: 1px solid #009bcb; color: #9fe8ff; }
+.los-page .orange-button, .los-page .orange-button:hover { background: #e48b0024; border: 1px solid #e48b00; color: #ffd18a; }
+.los-page .blue-button:disabled { background: #009bcb; color: #07151a; }
+.los-page .orange-button:disabled { background: #e48b00; color: #211500; }
+.los-page .smoke-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 0; background: none; }
+.los-page .smoke-controls h4 { margin: 0; font-size: 12px; color: #a4aeb7; font-weight: 400; }
+.los-page .smoke-patterns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.los-page .smoke-pattern { min-width: 0; min-height: 58px; padding: 6px 2px; gap: 4px; background: #13171b; color: #dfe4e8; border: 1px solid #3b434b; font-size: 12px; }
+.los-page .smoke-pattern:hover { transform: none; }
+.los-page .smoke-pattern > span:last-child { white-space: nowrap; }
+.los-page .smoke-pattern.selected { border-color: #e3e9ef; background: #37424c; color: white; box-shadow: inset 0 0 0 1px #e3e9ef; }
+.los-page .smoke-preview i { width: 10px; height: 10px; }
+.los-page .smoke-preview { grid-template-columns: repeat(2, 10px); }
+.los-page .smoke-preview-1x2 { grid-template-columns: 10px; }
+.los-page .instructions { font-size: 12px; line-height: 1.4; font-style: normal; }
+.los-page .clear-smokes-button, .los-page .secondary-button { min-height: 44px; background: #252c33; color: #dfe4e8; border: 1px solid #4b5661; }
+.los-page .reset-row { grid-template-columns: 1fr; }
+.los-page .auto-calculate-note { font-size: 11px; }
+.los-page .auto-calculate-note::after { content: ' 拖动地图平移 · 双指或按钮缩放'; }
+.los-page .los-result { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: none; margin: 0; padding: 8px; border-radius: 2px; box-shadow: none; font-size: 14px; }
+.los-page .los-result-icon { display: grid; place-items: center; flex: 0 0 26px; height: 26px; border-radius: 2px; }
+.los-page .result-reason { overflow-wrap: anywhere; font-size: 12px; }
+.los-page .status-toast { max-width: calc(100vw - 24px); font-size: 13px; }
+@media (max-width: 900px) and (orientation: portrait) {
+  .los-page .hidden-content { padding: 4px; }
+  .los-page .tactical-panel-header { flex-wrap: wrap; gap: 6px; padding: 6px; }
+  .los-page .tactical-panel-title { display: none; }
+  .los-page .los-map-selector { flex-basis: 100px; }
+  .los-page .calculator-page { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(180px, 1fr) auto; gap: 6px; padding: 6px; }
+  .los-page .calculator-controls { padding: 8px; max-height: 46dvh; }
+  .los-page .player-controls { gap: 7px; }
+  .los-page .controls-main button { min-height: 46px; }
+  .los-page .smoke-controls { grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+  .los-page .smoke-controls h4, .los-page #smoke-instructions { display: none; }
+  .los-page .smoke-patterns { grid-column: 1; }
+  .los-page .smoke-pattern { min-height: 46px; flex-direction: row; justify-content: center; gap: 8px; }
+  .los-page .clear-smokes-button { grid-column: 2; padding: 6px; font-size: 11px; }
+  .los-page .auto-calculate-note { display: none; }
+  .los-page .drag-tooltip { font-size: 11px; }
+  .los-page .reset-row button { min-height: 44px; }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  .los-page .hidden-layout { min-height: 300px; }
+  .los-page .hidden-content { padding: 4px; }
+  .los-page .tactical-panel-header { padding: 4px 6px; }
+  .los-page .calculator-page { grid-template-columns: minmax(0, 1fr) 230px; padding: 4px; gap: 4px; }
+  .los-page .calculator-controls { padding: 6px; }
+  .los-page .player-controls { gap: 6px; }
+  .los-page .controls-main button { min-height: 44px; }
+  .los-page .smoke-pattern { min-height: 44px; flex-direction: row; justify-content: center; }
+  .los-page .auto-calculate-note { display: none; }
+}
+@media (max-width: 380px) and (orientation: portrait) {
+  .los-page .smoke-pattern { flex-direction: column; gap: 3px; }
+}

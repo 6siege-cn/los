@@ -556,8 +556,8 @@ function draw() {
   drawGrid();
   drawWalls();
   drawSmokes();
-  drawPlayer(state.blue, "#4f8bff", state.draggingTeam === "blue");
-  drawPlayer(state.orange, "#ff7f50", state.draggingTeam === "orange");
+  drawPlayer(state.blue, "#009BCB", state.draggingTeam === "blue");
+  drawPlayer(state.orange, "#E48B00", state.draggingTeam === "orange");
   drawLineOfSight();
 }
 
@@ -569,11 +569,7 @@ function updateTooltip() {
   } else if (state.activeTeam) {
     tooltip.textContent = `轻触一个格子，放置${TEAM_NAMES[state.activeTeam]}干员`;
   } else {
-    tooltip.innerHTML =
-      "1. 第一次轻触放置蓝方干员<br>" +
-      "2. 第二次轻触放置橙方干员<br>" +
-      "3. 轻触可破坏墙壁以切换状态<br>" +
-      "4. 拖动干员即可移动";
+    tooltip.textContent = "轻触放置蓝方、橙方；拖动干员移动。轻触可破坏墙壁切换状态。";
   }
 }
 
@@ -584,12 +580,15 @@ function updateControls() {
   placeOrangeButton.classList.toggle("player-placed", Boolean(state.orange));
   placeBlueButton.disabled = state.activeTeam === "blue";
   placeOrangeButton.disabled = state.activeTeam === "orange";
+  placeBlueButton.setAttribute("aria-pressed", String(state.activeTeam === "blue"));
+  placeOrangeButton.setAttribute("aria-pressed", String(state.activeTeam === "orange"));
   smokeButtons.forEach((button) => {
     const matches =
       state.selectedSmokePattern &&
       Number(button.dataset.smokeWidth) === state.selectedSmokePattern.width &&
       Number(button.dataset.smokeHeight) === state.selectedSmokePattern.height;
     button.classList.toggle("selected", Boolean(matches));
+    button.setAttribute("aria-pressed", String(Boolean(matches)));
   });
 
   smokeInstructions.hidden = !state.selectedSmokePattern;
