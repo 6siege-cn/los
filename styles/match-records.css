@@ -46,3 +46,15 @@
 .match-marker-popover button { display:grid; place-items:center; width:44px; height:44px; padding:8px; }
 .match-marker-popover img { width:26px; height:26px; pointer-events:none; }
 @media(max-width:640px) { .match-teams { grid-template-columns:1fr; }.match-card { padding:12px; }.match-fields { grid-template-columns:1fr; gap:10px; }.match-field { flex-direction:row; align-items:center; }.match-field>span { flex:none; width:70px; }.match-field select { min-width:0; }.match-card-header { grid-template-columns:1fr; }.match-card-header time { grid-column:1; }.match-log ol { grid-template-columns:1fr; }.match-name { font-size:11px; } }
+
+/* Each saved match owns its winner theme, independently of the current draft. */
+.match-dialog[data-winner="attack"],.match-card[data-winner="attack"],.match-history-item[data-winner="attack"] { --match-accent:var(--attack); }
+.match-dialog[data-winner="defense"],.match-card[data-winner="defense"],.match-history-item[data-winner="defense"] { --match-accent:var(--defense); }
+.match-dialog[data-winner] { --r6s-highlight:var(--match-accent); border-color:var(--match-accent); }
+.match-dialog[data-winner] .match-dialog-head { border-bottom-color:var(--match-accent); }
+.match-dialog[data-winner] .match-dialog-head h2,.match-card[data-winner] .match-card-header h2,.match-history-item[data-winner]>strong { color:var(--match-accent); }
+.match-card[data-winner],.match-history-item[data-winner] { border-color:var(--match-accent,var(--line)); }
+.match-history-item[data-winner] { border-left-width:4px; background:color-mix(in srgb,var(--match-accent) 7%,var(--panel-soft)); }
+.match-dialog[data-winner] .match-actions button,.match-history-item[data-winner] button { border-color:var(--match-accent); color:var(--match-accent); }
+.match-dialog[data-winner] .match-actions button:hover,.match-history-item[data-winner] button:hover { background:color-mix(in srgb,var(--match-accent) 15%,var(--panel-soft)); }
+.match-card[data-winner] .match-tag,.match-history-item[data-winner] .match-tag { background:color-mix(in srgb,var(--match-accent,var(--line)) 18%,#242d36); }

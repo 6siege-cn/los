@@ -1,5 +1,5 @@
 import {createMatchStore,snapshotMatch,validateMatch,presetTags,uniqueTags,tagKey,marks,sideLabels,endings,endRounds,operatorLabel,mapNames,modes,mapLabel,modeLabel} from './match-records.js';
-import {el,renderMatchCard,matchPNG} from './match-card.js?v=map-mode-1';
+import {el,renderMatchCard,matchPNG} from './match-card.js?v=winner-theme-1';
 export function installMatchRecords(menuButton,{getCurrent,assets}){
   const store=createMatchStore(globalThis.indexedDB);
   const dialog=el('dialog','match-dialog');dialog.id='match-records';dialog.setAttribute('aria-labelledby','match-dialog-title');
@@ -14,7 +14,7 @@ export function installMatchRecords(menuButton,{getCurrent,assets}){
   let viewToken=0,editor=null,markAnchor=null;
   function button(label,action){const b=el('button','',label);b.type='button';b.addEventListener('click',action);return b;}
   function message(text){status.textContent=text;}
-  function changeView(label){viewToken++;editor=null;closeMarks();title.textContent=label;content.replaceChildren();message('');dialog.scrollTop=0;return viewToken;}
+  function changeView(label){delete dialog.dataset.winner;viewToken++;editor=null;closeMarks();title.textContent=label;content.replaceChildren();message('');dialog.scrollTop=0;return viewToken;}
   function fail(error){message('操作失败：'+(error?.message||'浏览器存储不可用')+'。未保存的内容仍保留在当前窗口。');}
   menuButton.title='对局记录';menuButton.setAttribute('aria-label','对局记录');menuButton.setAttribute('aria-haspopup','dialog');menuButton.setAttribute('aria-controls',dialog.id);
   menuButton.addEventListener('click',()=>{
@@ -31,7 +31,7 @@ export function installMatchRecords(menuButton,{getCurrent,assets}){
       const list=el('div','match-history-list');content.append(list);let count=0;
       const more=button('加载更多',appendPage);
       function appendPage(){for(const record of records.slice(count,count+10)){
-        const item=el('article','match-history-item');
+        const item=el('article','match-history-item');item.dataset.winner=record.winner;
         item.append(el('strong','',`${sideLabels[record.winner]??'未知'}获胜 · ${record.rule?.name??'未知规则'}`),el('span','',new Date(record.savedAt).toLocaleString('zh-CN',{hour12:false})),el('p','',`${mapLabel(record)} · ${modeLabel(record)} · ${record.ending} · 回合 ${record.endRound}`));
         const tags=el('div','match-tags');for(const tag of record.tags??[])tags.append(el('span','match-tag',tag));item.append(tags,button('查看对局',()=>detail(record)));list.append(item);
       }count+=10;more.hidden=count>=records.length;}
@@ -41,6 +41,7 @@ export function installMatchRecords(menuButton,{getCurrent,assets}){
   function detail(record,saved=false){
     changeView('对局详情');
     try{validateMatch(record);}catch{message('这条记录已损坏或版本不兼容，无法显示；原记录未删除。');return;}
+    dialog.dataset.winner=record.winner;
     if(saved)message('对局已保存到本机。');content.append(renderMatchCard(record,assets));
     const actions=el('div','match-actions');actions.append(button('下载图片',event=>download(record,event.currentTarget)),button('返回历史',history));content.append(actions);
   }

@@ -79,6 +79,8 @@ export async function checkMatchRecords(source,output){
     await page.getByRole('button',{name:'保存对局记录',exact:true}).tap();
     await page.getByRole('button',{name:'下载图片',exact:true}).waitFor();
     assert.ok((await page.locator('.match-status').innerText()).includes('已保存'));
+    assert.equal(await page.locator('.match-dialog').getAttribute('data-winner'),'attack');
+    assert.equal(await page.locator('.match-card-header h2').evaluate(n=>getComputedStyle(n).color),'rgb(0, 155, 203)');
     const record=await page.evaluate(async()=>{const {createMatchStore}=await import('./src/match-records.js');const rows=await createMatchStore(indexedDB).records();if(rows.length!==1)throw Error('Unexpected record count');return rows[0];});
     assert.equal(record.mapId,'kafe');assert.equal(record.mode,'人质模式');assert.equal(record.ending,'解救人质');
     assert.match(await page.locator('.match-meta').innerText(),/杜斯妥也夫斯基咖啡馆/);
@@ -153,6 +155,9 @@ export async function checkMatchRecords(source,output){
     await page.evaluate(()=>{IDBObjectStore.prototype.add=window.originalRecordAdd;document.querySelector('.match-form').requestSubmit();document.querySelector('.match-form').requestSubmit();});
     await page.getByRole('button',{name:'下载图片',exact:true}).waitFor();
     assert.equal(await page.evaluate(async()=>{const {createMatchStore}=await import('./src/match-records.js');return (await createMatchStore(indexedDB).records()).length;}),4);
+    assert.equal(await page.locator('.match-dialog').getAttribute('data-winner'),'defense');
+    assert.equal(await page.locator('.match-card-header h2').evaluate(n=>getComputedStyle(n).color),'rgb(228, 139, 0)');
+    if(output)await page.screenshot({path:join(output,'match-defense-theme.png')});
     const fiveBanDownload=page.waitForEvent('download');await page.getByRole('button',{name:'下载图片',exact:true}).click();const fiveBanImage=await fiveBanDownload;
     assert.equal(await fiveBanImage.failure(),null);if(output)await fiveBanImage.saveAs(join(output,'match-five-ban.png'));
     const fiveRecord=await page.evaluate(async()=>{const {createMatchStore}=await import('./src/match-records.js');return (await createMatchStore(indexedDB).records()).find(r=>r.history.length===20);});
@@ -163,6 +168,19 @@ export async function checkMatchRecords(source,output){
       try{await matchPNG(record,{...assets,exportAvatarURL:()=> 'data:image/png;base64,broken'});return false;}catch{return true;}
     },record);
     assert.equal(failedExport,true,'Invalid images must reject instead of producing blank portraits');
+    await page.getByRole('button',{name:'返回历史',exact:true}).click();
+    await page.locator('.match-history-item').first().waitFor();
+    assert.equal(await page.locator('.match-dialog').getAttribute('data-winner'),null);
+    for(const [side,color] of [['attack','rgb(0, 155, 203)'],['defense','rgb(228, 139, 0)']]){
+      const item=page.locator('.match-history-item[data-winner='+side+']').first();
+      assert.equal(await item.locator('strong').evaluate(n=>getComputedStyle(n).color),color);
+      await item.getByRole('button',{name:'查看对局',exact:true}).click();
+      assert.equal(await page.locator('.match-dialog').getAttribute('data-winner'),side);
+      assert.equal(await page.locator('.match-actions button').first().evaluate(n=>getComputedStyle(n).borderTopColor),color);
+      await page.getByRole('button',{name:'返回历史',exact:true}).click();
+      await page.locator('.match-history-item').first().waitFor();
+    }
+    if(output)await page.screenshot({path:join(output,'match-history-themes.png')});
     assert.deepEqual(errors,[]);
     console.log('Match records: completion gate, mobile marks, tags, history, reset independence, PNG and concurrent saves passed.');
   }finally{await context.close();}

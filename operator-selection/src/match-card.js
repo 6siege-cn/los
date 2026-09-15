@@ -11,7 +11,7 @@ export function portrait(op,record,assets,editable=false){
   box.append(face,el('span','match-name',op.name));return box;
 }
 export function renderMatchCard(record,assets,{editable=false}={}){
-  const card=el('article','match-card');card.setAttribute('aria-label','对局卡片');
+  const card=el('article','match-card');card.setAttribute('aria-label','对局卡片');card.dataset.winner=record.winner;
   const header=el('header','match-card-header');header.append(el('span','match-kicker','SIX SIEGE · 对局记录'),el('h2','',resultLabel(record)),el('time','',dateLabel(record)));
   if(record.winner)header.style.borderColor=`var(--${record.winner})`;
   const meta=el('div','match-meta');meta.append(el('span','',mapLabel(record)),el('span','',modeLabel(record)),el('span','',record.rule.name),el('span','','范围 '+scopeLabel(record.scope)),el('span','',record.ending||'结束方式待选'),el('span','',record.endRound?'结束回合 '+record.endRound:'结束回合待选'));
@@ -63,7 +63,7 @@ export async function matchPNG(record,assets){
   const colors={attack:'#009BCB',defense:'#E48B00'};
   rect(0,0,1200,canvas.height,'#10151a');rect(24,24,1152,canvas.height-48,'#171e25');
   rect(24,24,1152,5,colors[record.winner]||'#88949f');
-  text('SIX SIEGE  /  对局记录',48,74,22,'#91a0ad');text(resultLabel(record),48,128,40);text(dateLabel(record),790,76,20,'#91a0ad');
+  text('SIX SIEGE  /  对局记录',48,74,22,'#91a0ad');text(resultLabel(record),48,128,40,colors[record.winner]||'#e6e6e6');text(dateLabel(record),790,76,20,'#91a0ad');
   text(record.rule.name+'    范围 '+scopeLabel(record.scope),48,176,23);
   text(record.ending+'    结束回合 '+record.endRound,720,176,23);
   text(mapLabel(record)+'    '+modeLabel(record),48,205,21,'#91a0ad');
