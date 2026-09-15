@@ -8,7 +8,7 @@ import operators from '../operator-selection/data/operators.js';
 
 const worker=readFileSync(new URL('../operator-selection/sw.js',import.meta.url),'utf8');
 const scope='https://example.test/los/operator-selection/';
-function harness({core=['assets/optimized/dice-v1.webp'],panels=[],storage=new Map(),failCache=false,fetcher}={}){
+function harness({core=['assets/optimized/dice-v1.webp'],panels=[],exports=[],storage=new Map(),failCache=false,fetcher}={}){
   const handlers={},requests=[];
   const caches={async open(name){
     if(failCache)throw Error('Storage denied');
@@ -18,7 +18,7 @@ function harness({core=['assets/optimized/dice-v1.webp'],panels=[],storage=new M
     return {async match(url){return entries.get(key(url))?.clone();},async put(url,response){entries.set(key(url),response.clone());},
       async keys(){return [...entries.keys()].map(url=>({url}));},async delete(url){return entries.delete(key(url));}};
   }};
-  const self={registration:{scope},IMAGE_MANIFEST:{core,panels},skipWaiting:async()=>{},clients:{claim:async()=>{}},addEventListener:(name,handler)=>{handlers[name]=handler;}};
+  const self={registration:{scope},IMAGE_MANIFEST:{core,panels},EXPORT_IMAGES:exports,skipWaiting:async()=>{},clients:{claim:async()=>{}},addEventListener:(name,handler)=>{handlers[name]=handler;}};
   vm.runInNewContext(worker,{self,caches,URL,Map,Set,Promise,importScripts:()=>{},fetch:async url=>{
     requests.push(url);return fetcher?fetcher(url):new Response('image bytes',{headers:{'Content-Type':'image/webp'}});
   }});
@@ -33,6 +33,22 @@ test('repeat and offline image access uses persistent cache across worker restar
   const next=harness({storage:first.storage,fetcher:()=>{throw Error('offline');}});
   assert.equal(await (await next.fetch('assets/optimized/dice-v1.webp')).text(),'image bytes');
   assert.equal(next.requests.length,0);
+});
+
+test('export PNGs cache on demand independently and survive offline worker restart',async()=>{
+  const exports=['assets/export/avatar-v1.png'],first=harness({exports});
+  await first.event('message',{type:'WARM_IMAGES'});
+  assert.equal(first.requests.some(url=>url.includes('/export/')),false);
+  await first.fetch(exports[0]);
+  assert.equal([...first.storage.entries()].find(([name])=>name.endsWith(':export-v1'))[1].size,1);
+  const offline=harness({exports,storage:first.storage,fetcher:()=>{throw Error('offline');}});
+  assert.equal((await offline.fetch(exports[0])).status,200);
+  assert.equal(offline.requests.length,0);
+  const changed=harness({exports:['assets/export/avatar-v2.png'],storage:first.storage});
+  await changed.event('activate');
+  await changed.fetch('assets/export/avatar-v2.png');
+  assert.deepEqual(changed.requests,[scope+'assets/export/avatar-v2.png']);
+  assert.equal([...changed.storage.entries()].find(([name])=>name.endsWith(':export-v1'))[1].size,1);
 });
 test('new image versions load fresh while unchanged images remain cached; other pages are ignored',async()=>{
   const old=harness({core:['assets/optimized/dice-v1.webp','assets/optimized/avatar.svg']});
