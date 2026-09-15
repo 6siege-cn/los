@@ -1,4 +1,4 @@
-import {sideLabels,scopeLabel,operatorLabel,historyLabel,marks} from './match-records.js';
+import {sideLabels,scopeLabel,operatorLabel,historyLabel,marks,mapLabel,modeLabel} from './match-records.js';
 export function el(tag,className='',text=''){const node=document.createElement(tag);node.className=className;node.textContent=text;return node;}
 const dateLabel=record=>new Date(record.savedAt).toLocaleString('zh-CN',{hour12:false});
 const resultLabel=record=>record.winner?`${sideLabels[record.winner]}获胜`:'待填写结果';
@@ -14,7 +14,7 @@ export function renderMatchCard(record,assets,{editable=false}={}){
   const card=el('article','match-card');card.setAttribute('aria-label','对局卡片');
   const header=el('header','match-card-header');header.append(el('span','match-kicker','SIX SIEGE · 对局记录'),el('h2','',resultLabel(record)),el('time','',dateLabel(record)));
   if(record.winner)header.style.borderColor=`var(--${record.winner})`;
-  const meta=el('div','match-meta');meta.append(el('span','',record.rule.name),el('span','','范围 '+scopeLabel(record.scope)),el('span','',record.ending||'结束方式待选'),el('span','',record.endRound?'结束回合 '+record.endRound:'结束回合待选'));
+  const meta=el('div','match-meta');meta.append(el('span','',mapLabel(record)),el('span','',modeLabel(record)),el('span','',record.rule.name),el('span','','范围 '+scopeLabel(record.scope)),el('span','',record.ending||'结束方式待选'),el('span','',record.endRound?'结束回合 '+record.endRound:'结束回合待选'));
   card.append(header,meta);
   const teams=el('div','match-teams');
   for(const side of Object.keys(sideLabels)){
@@ -66,6 +66,7 @@ export async function matchPNG(record,assets){
   text('SIX SIEGE  /  对局记录',48,74,22,'#91a0ad');text(resultLabel(record),48,128,40);text(dateLabel(record),790,76,20,'#91a0ad');
   text(record.rule.name+'    范围 '+scopeLabel(record.scope),48,176,23);
   text(record.ending+'    结束回合 '+record.endRound,720,176,23);
+  text(mapLabel(record)+'    '+modeLabel(record),48,205,21,'#91a0ad');
   function drawPortrait(id,x,y,size){
     const op=record.operators.find(op=>op.id===id),image=pictures.get(id);rect(x,y,size,size,'#242d36');
     const width=image.naturalWidth,height=image.naturalHeight;

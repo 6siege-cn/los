@@ -1,7 +1,12 @@
+import {mapNames} from '../../scripts/map-names.js';
+export {mapNames};
+export const modes=Object.freeze(['炸弹模式','人质模式','肃清威胁']);
+export const mapLabel=record=>mapNames[record.mapId]||(record.version===1?'地图未记录':'地图待选');
+export const modeLabel=record=>record.mode||(record.version===1?'模式未记录':'模式待选');
 export const presetTags=Object.freeze(['RUSH','偷人','好运','超时','白给']);
 export const marks=Object.freeze({'thumbs-up':'向上大拇指','thumbs-down':'向下大拇指',skull:'骷髅头',crosshair:'瞄准准星'});
 export const sideLabels=Object.freeze({attack:'进攻方',defense:'防守方'});
-export const endings=Object.freeze(['拆除炸弹','歼灭敌方','对手投降']);
+export const endings=Object.freeze(['拆除炸弹','歼灭敌方','对手投降','解救人质','时间用尽','计分获胜']);
 export const endRounds=Object.freeze(['1','2','3','4','5','+']);
 export const normalizeTag=value=>String(value).normalize('NFKC').trim().replace(/\s+/g,' ');
 export const tagKey=value=>normalizeTag(value).toLocaleLowerCase();
@@ -11,12 +16,14 @@ export function uniqueTags(values){
 export function snapshotMatch({state,ruleId,rule,scope,orderMode,operators},id,date){
   if(!state.complete||Object.values(state.picks).some(ids=>ids.length!==5))throw Error('完成十名干员的选禁后才能保存对局');
   const ids=new Set(state.history.map(event=>event.operatorId));
-  return structuredClone({version:1,id,savedAt:date,ruleId,rule,scope,orderMode,history:state.history,picks:state.picks,bans:state.bans,
-    operators:operators.filter(op=>ids.has(op.id)),winner:'',ending:'',endRound:'',marks:{},tags:[]});
+  return structuredClone({version:2,id,savedAt:date,ruleId,rule,scope,orderMode,history:state.history,picks:state.picks,bans:state.bans,
+    operators:operators.filter(op=>ids.has(op.id)),mapId:'',mode:'',winner:'',ending:'',endRound:'',marks:{},tags:[]});
 }
 export function validateMatch(record){
-  if(!record||record.version!==1||typeof record.id!=='string'||!record.id||!Number.isFinite(Date.parse(record.savedAt))||
+  if(!record||![1,2].includes(record.version)||typeof record.id!=='string'||!record.id||!Number.isFinite(Date.parse(record.savedAt))||
     !Object.hasOwn(sideLabels,record.winner)||!endings.includes(record.ending)||!endRounds.includes(record.endRound))throw Error('请选择获胜方、结束方式和结束回合');
+  if((record.version===2||record.mapId!==undefined)&&!Object.hasOwn(mapNames,record.mapId))throw Error('请选择地图');
+  if((record.version===2||record.mode!==undefined)&&!modes.includes(record.mode))throw Error('请选择模式');
   if(!Array.isArray(record.history)||!Array.isArray(record.operators)||!record.rule?.name||typeof record.scope?.alt!=='boolean'||typeof record.scope?.diy!=='boolean')throw Error('对局数据不完整');
   const selected=[];
   for(const side of Object.keys(sideLabels)){

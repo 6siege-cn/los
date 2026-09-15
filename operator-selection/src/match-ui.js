@@ -1,5 +1,5 @@
-import {createMatchStore,snapshotMatch,validateMatch,presetTags,uniqueTags,tagKey,marks,sideLabels,endings,endRounds,operatorLabel} from './match-records.js';
-import {el,renderMatchCard,matchPNG} from './match-card.js?v=png-export-1';
+import {createMatchStore,snapshotMatch,validateMatch,presetTags,uniqueTags,tagKey,marks,sideLabels,endings,endRounds,operatorLabel,mapNames,modes,mapLabel,modeLabel} from './match-records.js';
+import {el,renderMatchCard,matchPNG} from './match-card.js?v=map-mode-1';
 export function installMatchRecords(menuButton,{getCurrent,assets}){
   const store=createMatchStore(globalThis.indexedDB);
   const dialog=el('dialog','match-dialog');dialog.id='match-records';dialog.setAttribute('aria-labelledby','match-dialog-title');
@@ -32,7 +32,7 @@ export function installMatchRecords(menuButton,{getCurrent,assets}){
       const more=button('加载更多',appendPage);
       function appendPage(){for(const record of records.slice(count,count+10)){
         const item=el('article','match-history-item');
-        item.append(el('strong','',`${sideLabels[record.winner]??'未知'}获胜 · ${record.rule?.name??'未知规则'}`),el('span','',new Date(record.savedAt).toLocaleString('zh-CN',{hour12:false})),el('p','',`${record.ending} · 回合 ${record.endRound}`));
+        item.append(el('strong','',`${sideLabels[record.winner]??'未知'}获胜 · ${record.rule?.name??'未知规则'}`),el('span','',new Date(record.savedAt).toLocaleString('zh-CN',{hour12:false})),el('p','',`${mapLabel(record)} · ${modeLabel(record)} · ${record.ending} · 回合 ${record.endRound}`));
         const tags=el('div','match-tags');for(const tag of record.tags??[])tags.append(el('span','match-tag',tag));item.append(tags,button('查看对局',()=>detail(record)));list.append(item);
       }count+=10;more.hidden=count>=records.length;}
       content.append(more);appendPage();
@@ -62,6 +62,7 @@ export function installMatchRecords(menuButton,{getCurrent,assets}){
         for(const [value,name] of values){const option=el('option','',name);option.value=value;select.append(option);}
         select.addEventListener('change',()=>{record[key]=select.value;refreshCard();});wrapper.append(el('span','',label),select);fields.append(wrapper);
       }
+      selectField('mapId','地图',Object.entries(mapNames));selectField('mode','模式',modes.map(v=>[v,v]));
       selectField('winner','获胜方',Object.entries(sideLabels));selectField('ending','结束方式',endings.map(v=>[v,v]));selectField('endRound','结束回合',endRounds.map(v=>[v,v]));form.append(fields);
       const tagSection=el('fieldset','match-tag-section');tagSection.append(el('legend','','对局标签'));
       const tagChoices=el('div','match-tag-choices'),custom=el('div','match-custom-tag'),input=el('input');input.type='text';input.maxLength=24;input.placeholder='自定义标签（最多24字）';input.setAttribute('aria-label','自定义标签');

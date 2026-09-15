@@ -1,3 +1,4 @@
+import {mapNames as MAP_NAMES} from "./map-names.js";
 import { checkLineOfSight as calculateLineOfSight } from "./los-engine.js";
 import { calculatePinchTransform, pointerPair } from "./pinch-zoom.js?v=20260903.1";
 
@@ -29,16 +30,7 @@ const WALL_COLORS = {
   window: "#0288d1",
 };
 
-const MAP_NAMES = {
-  consulate: "领事馆",
-  clubhouse: "俱乐部会所",
-  bank: "银行",
-  kafe: "杜斯妥也夫斯基咖啡馆",
-  chalet: "木屋",
-  oregon: "俄勒冈乡间屋宅",
-  coastline: "海岸线",
-  border: "边境",
-};
+
 
 const TEAM_NAMES = {
   blue: "蓝方",

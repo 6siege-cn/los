@@ -34,8 +34,12 @@ export async function checkMatchRecords(source,output){
     await page.locator('.menu-button').tap();await page.locator('.match-save-entry').tap();
     assert.equal(await page.locator('[data-mark-id]').count(),10);
     await page.getByRole('button',{name:'保存对局记录',exact:true}).tap();assert.equal(await page.locator('.match-form').count(),1);
+    assert.equal(await page.locator('select[name=mapId] option').count(),9);
+    assert.equal(await page.locator('select[name=mode] option').count(),4);
+    await page.getByRole('combobox',{name:'地图',exact:true}).selectOption('kafe');
+    await page.getByRole('combobox',{name:'模式',exact:true}).selectOption('人质模式');
     await page.getByRole('combobox',{name:'获胜方',exact:true}).selectOption('attack');
-    await page.getByRole('combobox',{name:'结束方式',exact:true}).selectOption('拆除炸弹');
+    await page.getByRole('combobox',{name:'结束方式',exact:true}).selectOption('解救人质');
     await page.getByRole('combobox',{name:'结束回合',exact:true}).selectOption('+');
     await page.locator('.match-tag-choices').getByRole('button',{name:'RUSH',exact:true}).tap();
     await page.getByRole('textbox',{name:'自定义标签',exact:true}).fill('合作突击');await page.getByRole('button',{name:'添加标签',exact:true}).tap();
@@ -76,6 +80,8 @@ export async function checkMatchRecords(source,output){
     await page.getByRole('button',{name:'下载图片',exact:true}).waitFor();
     assert.ok((await page.locator('.match-status').innerText()).includes('已保存'));
     const record=await page.evaluate(async()=>{const {createMatchStore}=await import('./src/match-records.js');const rows=await createMatchStore(indexedDB).records();if(rows.length!==1)throw Error('Unexpected record count');return rows[0];});
+    assert.equal(record.mapId,'kafe');assert.equal(record.mode,'人质模式');assert.equal(record.ending,'解救人质');
+    assert.match(await page.locator('.match-meta').innerText(),/杜斯妥也夫斯基咖啡馆/);
     assert.equal(record.history[0].type,'ban');assert.equal(record.history[1].operatorId,'altsledge');assert.equal(record.history.length,14);
     assert.equal(Object.keys(record.marks).length,4);assert.deepEqual(record.tags,['RUSH','合作突击']);assert.equal(record.endRound,'+');
     for(const [width,height] of [[390,844],[1366,900],[667,300]]){
@@ -135,6 +141,8 @@ export async function checkMatchRecords(source,output){
       let rejected=false;try{await store.save(record);}catch{rejected=true;}
       return rejected&&(await store.records()).length===3;
     }),true);
+    await page.getByRole('combobox',{name:'地图',exact:true}).selectOption('oregon');
+    await page.getByRole('combobox',{name:'模式',exact:true}).selectOption('肃清威胁');
     await page.getByRole('combobox',{name:'获胜方',exact:true}).selectOption('defense');
     await page.getByRole('combobox',{name:'结束方式',exact:true}).selectOption('对手投降');
     await page.getByRole('combobox',{name:'结束回合',exact:true}).selectOption('5');

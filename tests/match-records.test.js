@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {snapshotMatch,validateMatch,uniqueTags,marks} from '../operator-selection/src/match-records.js';
+import {snapshotMatch,validateMatch,uniqueTags,marks,mapNames,modes,endings} from '../operator-selection/src/match-records.js';
 import {createDraft} from '../operator-selection/src/engine.js';
 import {rules} from '../operator-selection/src/rules.js';
 import operators from '../operator-selection/data/operators.js';
@@ -10,7 +10,7 @@ function current(ruleId='standard'){
 function completed(ruleId='standard'){
   const c=current(ruleId);while(!c.draft.snapshot().complete)c.draft.choose(operators.find(op=>c.draft.canChoose(op.id)).id);
   const record=snapshotMatch({...c,state:c.draft.snapshot()},'fixture','2026-09-15T00:00:00Z');
-  return {...record,winner:'defense',ending:'歼灭敌方',endRound:'+'};
+  return {...record,mapId:'consulate',mode:'炸弹模式',winner:'defense',ending:'歼灭敌方',endRound:'+'};
 }
 test('only finished drafts can become match records; both rules keep all history and ten picks',()=>{
   const c=current();assert.throws(()=>snapshotMatch({...c,state:c.draft.snapshot()},'x','2026-09-15'),/完成/);
@@ -31,4 +31,19 @@ test('validate result enums, marks only on selected operators, unique reusable t
   for(const change of [r=>r.winner='',r=>r.ending='invalid',r=>r.endRound='6',r=>r.marks[r.bans.attack[0]]='skull',r=>r.marks[r.picks.attack[0]]='invalid',r=>r.picks.attack.pop(),r=>r.tags=Array.from({length:21},(_,i)=>'tag'+i)]){
     const record=completed();change(record);assert.throws(()=>validateMatch(record));
   }
+});
+
+test('maps match LOS data; all maps, modes and endings are accepted',async()=>{
+  const {readFile}=await import('node:fs/promises');
+  const maps=JSON.parse(await readFile(new URL('../data/maps.json',import.meta.url),'utf8'));
+  assert.equal(maps.length,8);assert.deepEqual(Object.keys(mapNames),maps.map(m=>m.id));
+  for(const mapId of Object.keys(mapNames))for(const mode of modes)for(const ending of endings){
+    const record=validateMatch({...completed(),mapId,mode,ending});assert.equal(record.mapId,mapId);assert.equal(record.mode,mode);assert.equal(record.ending,ending);
+  }
+  for(const change of [{mapId:''},{mapId:'unknown'},{mode:''},{mode:'unknown'}])assert.throws(()=>validateMatch({...completed(),...change}));
+});
+test('legacy records without map or mode remain readable',()=>{
+  const legacy={...completed(),version:1};delete legacy.mapId;delete legacy.mode;
+  assert.equal(validateMatch(legacy).version,1);
+  assert.throws(()=>validateMatch({...legacy,version:2}));
 });

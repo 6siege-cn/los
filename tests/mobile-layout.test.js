@@ -1,3 +1,4 @@
+import {mapNames} from '../scripts/map-names.js';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -50,7 +51,7 @@ test("visible interface copy is localized in Simplified Chinese", () => {
   assert.match(html, /视线测量工具/);
   assert.match(html, /放置蓝方干员/);
   assert.match(app, /视线：可见/);
-  assert.match(app, /杜斯妥也夫斯基咖啡馆/);
+  assert.equal(mapNames.kafe, '杜斯妥也夫斯基咖啡馆');
 });
 
 test("the line-of-sight rules panel is not rendered", () => {
