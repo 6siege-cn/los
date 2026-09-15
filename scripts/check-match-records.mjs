@@ -1,6 +1,28 @@
 import assert from 'node:assert/strict';
 import {join} from 'node:path';
 import {readFile} from 'node:fs/promises';
+import {createRequire} from 'node:module';
+import {dirname} from 'node:path';
+const require=createRequire(import.meta.url);
+let sharp;
+try{sharp=require('sharp');}catch{sharp=createRequire(join(dirname(process.execPath),'../package.json'))('sharp');}
+async function verifyPortraitPixels(download,record){
+  const chunks=[];for await(const chunk of await download.createReadStream())chunks.push(chunk);
+  const {data,info}=await sharp(Buffer.concat(chunks)).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+  assert.equal(info.width,1200);
+  for(const [i,side] of ['attack','defense'].entries())for(const kind of ['picks','bans']){
+    record[kind][side].forEach((id,j)=>{
+      const size=kind==='picks'?96:70,x=48+i*576+j*106,y=kind==='picks'?284:466;
+      let painted=0;
+      // Exclude the corner version/mark and the name; blank avatar squares must fail.
+      for(let dy=8;dy<size-30;dy++)for(let dx=8;dx<size-8;dx++){
+        const offset=((y+dy)*info.width+x+dx)*4;
+        if(data[offset]!==36||data[offset+1]!==45||data[offset+2]!==54)painted++;
+      }
+      assert.ok(painted>50,`Missing exported ${kind} portrait: ${id}`);
+    });
+  }
+}
 export async function checkMatchRecords(source,output){
   const context=await source.context().browser().newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
   try{
@@ -61,8 +83,41 @@ export async function checkMatchRecords(source,output){
       assert.equal(await page.locator('.match-dialog').evaluate(node=>node.scrollWidth<=node.clientWidth),true);
       if(output)await page.screenshot({path:join(output,`match-detail-${width}x${height}.png`)});
     }
-    const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'下载图片',exact:true}).click();const download=await downloadPromise;
+    await page.setViewportSize({width:390,height:844});
+    // Reproduce zero layout dimensions and prohibit the SVG canvas path. Decoding must finish before drawing.
+    await page.evaluate(()=>{
+      window.exportOriginalDraw=CanvasRenderingContext2D.prototype.drawImage;
+      window.exportOriginalDecode=HTMLImageElement.prototype.decode;
+      window.exportDimensions=['width','height'].map(key=>[key,Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,key)]);
+      for(const [key] of window.exportDimensions)Object.defineProperty(HTMLImageElement.prototype,key,{configurable:true,get:()=>0});
+      HTMLImageElement.prototype.decode=async function(){await window.exportOriginalDecode.call(this);await new Promise(r=>setTimeout(r,40));this.exportDecoded=true;};
+      CanvasRenderingContext2D.prototype.drawImage=function(img,...args){
+        if(img instanceof HTMLImageElement){if(!img.exportDecoded||!img.src.includes('.png'))throw Error('Export must draw decoded PNG images');}
+        return window.exportOriginalDraw.call(this,img,...args);
+      };
+    });
+    const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'下载图片',exact:true}).tap();const download=await downloadPromise;
     assert.equal(await download.failure(),null);assert.match(download.suggestedFilename(),/\.png$/);
+    await verifyPortraitPixels(download,record);
+    await page.waitForFunction(async()=>{
+      const {assets}=await import('./src/config.js?v=png-export-1');
+      const {createMatchStore}=await import('./src/match-records.js');
+      const [record]=await createMatchStore(indexedDB).records();
+      return (await Promise.all(record.operators.map(op=>caches.match(assets.exportAvatarURL(op.avatar))))).every(Boolean);
+    });
+    await context.setOffline(true);
+    assert.equal(await page.evaluate(async()=>{
+      const {assets}=await import('./src/config.js?v=png-export-1');
+      const {createMatchStore}=await import('./src/match-records.js');
+      const [record]=await createMatchStore(indexedDB).records();
+      return (await Promise.all(record.operators.map(async op=>(await fetch(assets.exportAvatarURL(op.avatar))).ok))).every(Boolean);
+    }),true,'Export avatars should remain available from the offline image cache');
+    await context.setOffline(false);
+    await page.evaluate(()=>{
+      CanvasRenderingContext2D.prototype.drawImage=window.exportOriginalDraw;
+      HTMLImageElement.prototype.decode=window.exportOriginalDecode;
+      for(const [key,descriptor] of window.exportDimensions)Object.defineProperty(HTMLImageElement.prototype,key,descriptor);
+    });
     if(output){const path=join(output,'match-card.png');await download.saveAs(path);const png=await readFile(path);assert.equal(png.readUInt32BE(16),1200);assert.ok(png.readUInt32BE(20)>900);}
     await page.getByRole('button',{name:'关闭对局记录',exact:true}).click();await page.locator('.reset-button').click();await page.reload();
     await page.locator('.menu-button').click();await page.getByRole('button',{name:'查看对局',exact:true}).click();
@@ -92,6 +147,14 @@ export async function checkMatchRecords(source,output){
     assert.equal(await page.evaluate(async()=>{const {createMatchStore}=await import('./src/match-records.js');return (await createMatchStore(indexedDB).records()).length;}),4);
     const fiveBanDownload=page.waitForEvent('download');await page.getByRole('button',{name:'下载图片',exact:true}).click();const fiveBanImage=await fiveBanDownload;
     assert.equal(await fiveBanImage.failure(),null);if(output)await fiveBanImage.saveAs(join(output,'match-five-ban.png'));
+    const fiveRecord=await page.evaluate(async()=>{const {createMatchStore}=await import('./src/match-records.js');return (await createMatchStore(indexedDB).records()).find(r=>r.history.length===20);});
+    await verifyPortraitPixels(fiveBanImage,fiveRecord);
+    const failedExport=await page.evaluate(async record=>{
+      const {matchPNG}=await import('./src/match-card.js?v=png-export-1');
+      const {assets}=await import('./src/config.js?v=png-export-1');
+      try{await matchPNG(record,{...assets,exportAvatarURL:()=> 'data:image/png;base64,broken'});return false;}catch{return true;}
+    },record);
+    assert.equal(failedExport,true,'Invalid images must reject instead of producing blank portraits');
     assert.deepEqual(errors,[]);
     console.log('Match records: completion gate, mobile marks, tags, history, reset independence, PNG and concurrent saves passed.');
   }finally{await context.close();}

@@ -1,5 +1,5 @@
 import {createMatchStore,snapshotMatch,validateMatch,presetTags,uniqueTags,tagKey,marks,sideLabels,endings,endRounds,operatorLabel} from './match-records.js';
-import {el,renderMatchCard,matchPNG} from './match-card.js?v=mark-popover-1';
+import {el,renderMatchCard,matchPNG} from './match-card.js?v=png-export-1';
 export function installMatchRecords(menuButton,{getCurrent,assets}){
   const store=createMatchStore(globalThis.indexedDB);
   const dialog=el('dialog','match-dialog');dialog.id='match-records';dialog.setAttribute('aria-labelledby','match-dialog-title');

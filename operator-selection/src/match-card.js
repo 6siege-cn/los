@@ -29,10 +29,29 @@ export function renderMatchCard(record,assets,{editable=false}={}){
   const list=el('ol');record.history.forEach((event,i)=>list.append(el('li','',historyLabel(record,event,i))));log.append(list);card.append(log);return card;
 }
 const imagePromises=new Map();
-function loadImage(url){if(!url)return Promise.reject(Error('缺少头像素材'));if(!imagePromises.has(url))imagePromises.set(url,new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>{imagePromises.delete(url);reject(Error('图片加载失败，请联网后重试'));};image.src=url;}));return imagePromises.get(url);}
+function loadImage(url){
+  if(!url)return Promise.reject(Error('缺少导出素材，请刷新页面后重试'));
+  if(!imagePromises.has(url)){
+    const pending=new Promise((resolve,reject)=>{
+      const image=new Image();
+      const timer=setTimeout(()=>reject(Error('图片加载超时，请联网后重试')),20000);
+      const fail=()=>{clearTimeout(timer);reject(Error('图片加载失败，请联网后重试'));};
+      image.onload=async()=>{
+        try{
+          if(image.decode)await image.decode();
+          if(!image.naturalWidth||!image.naturalHeight)throw Error('Empty image');
+          clearTimeout(timer);resolve(image);
+        }catch{fail();}
+      };
+      image.onerror=fail;image.src=url;
+    }).catch(error=>{imagePromises.delete(url);throw error;});
+    imagePromises.set(url,pending);
+  }
+  return imagePromises.get(url);
+}
 export async function matchPNG(record,assets){
-  const pictures=new Map(await Promise.all(record.operators.map(async op=>[op.id,await loadImage(assets.avatarURL(op.avatar))])));
-  const markerImages=new Map(await Promise.all([...new Set(Object.values(record.marks))].map(async key=>[key,await loadImage(assets.recordMarks[key])])));
+  const pictures=new Map(await Promise.all(record.operators.map(async op=>[op.id,await loadImage(assets.exportAvatarURL(op.avatar))])));
+  const markerImages=new Map(await Promise.all([...new Set(Object.values(record.marks))].map(async key=>[key,await loadImage(assets.exportMarks[key])])));
   await document.fonts?.ready;
   const canvas=document.createElement('canvas');canvas.width=1200;
   let ctx=canvas.getContext('2d');ctx.font='22px "Microsoft YaHei", sans-serif';
@@ -49,7 +68,8 @@ export async function matchPNG(record,assets){
   text(record.ending+'    结束回合 '+record.endRound,720,176,23);
   function drawPortrait(id,x,y,size){
     const op=record.operators.find(op=>op.id===id),image=pictures.get(id);rect(x,y,size,size,'#242d36');
-    const ratio=Math.min((size-8)/image.width,(size-8)/image.height);ctx.drawImage(image,x+(size-image.width*ratio)/2,y+(size-image.height*ratio)/2,image.width*ratio,image.height*ratio);
+    const width=image.naturalWidth,height=image.naturalHeight;
+    const ratio=Math.min((size-8)/width,(size-8)/height);ctx.drawImage(image,x+(size-width*ratio)/2,y+(size-height*ratio)/2,width*ratio,height*ratio);
     if(op.version!=='off'){rect(x,y+size-22,42,22,'#080c10');text(op.version.toUpperCase(),x+3,y+size-5,14);}
     if(record.marks[id]){rect(x+size-30,y+size-30,30,30,'#080c10');ctx.drawImage(markerImages.get(record.marks[id]),x+size-27,y+size-27,24,24);}
     // Fit long names without clipping or truncating them in exported cards.

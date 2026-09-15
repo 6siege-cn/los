@@ -1,7 +1,10 @@
 const base = new URL('../', import.meta.url);
 import manifest from './asset-manifest.js?v=d035f7e5720d0198';
+import exportAssets from './export-assets.js?v=e80de97658f59b55';
 const resolve=path=>new URL(path,base).href;
 export const assets = {
+  exportAvatarURL:file=>exportAssets.avatars[file]?resolve(exportAssets.avatars[file]):null,
+  exportMarks:Object.fromEntries(Object.entries(exportAssets.marks).map(([key,path])=>[key,resolve(path)])),
   recordMarks:Object.fromEntries(['thumbs-up','thumbs-down','skull','crosshair'].map(key=>[key,resolve('assets/icons/record-'+key+'.svg?v=1')])),
   avatarBase: new URL('assets/operators/badges/', base),
   panelBase: new URL('assets/operators/中文干员面板26.9.4/', base),

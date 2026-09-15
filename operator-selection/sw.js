@@ -1,10 +1,13 @@
 /* Cache only content-addressed images. HTML, scripts and game data stay network-backed. */
 importScripts('./cache-manifest.js?v=d035f7e5720d0198');
+importScripts('./export-cache-manifest.js?v=e80de97658f59b55');
 const scope=self.registration.scope;
 const coreURLs=new Set(self.IMAGE_MANIFEST.core.map(path=>new URL(path,scope).href));
 const panelURLs=new Set(self.IMAGE_MANIFEST.panels.map(path=>new URL(path,scope).href));
+const exportURLs=new Set(self.EXPORT_IMAGES.map(path=>new URL(path,scope).href));
 const prefix='operator-images:'+new URL(scope).pathname;
 const coreCache=prefix+':core-v1',panelCache=prefix+':panels-v1';
+const exportCache=prefix+':export-v1';
 const PANEL_LIMIT=24;
 const pending=new Map();
 let writes=Promise.resolve();
@@ -22,7 +25,7 @@ async function save(url,response,name){
   await writes;
 }
 async function imageResponse(url){
-  const name=coreURLs.has(url)?coreCache:panelCache;
+  const name=exportURLs.has(url)?exportCache:coreURLs.has(url)?coreCache:panelCache;
   try{const cached=await (await caches.open(name)).match(url);if(cached)return cached;}catch{}
   if(!pending.has(url)){
     pending.set(url,(async()=>{
@@ -36,7 +39,7 @@ async function imageResponse(url){
 self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
   try{
-    for(const [name,allowed] of [[coreCache,coreURLs],[panelCache,panelURLs]]){
+    for(const [name,allowed] of [[coreCache,coreURLs],[panelCache,panelURLs],[exportCache,exportURLs]]){
       const cache=await caches.open(name);
       for(const key of await cache.keys())if(!allowed.has(key.url))await cache.delete(key);
     }
@@ -46,7 +49,7 @@ self.addEventListener('activate',event=>event.waitUntil((async()=>{
 self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET')return;
   const url=event.request.url;
-  if(!coreURLs.has(url)&&!panelURLs.has(url))return;
+  if(!coreURLs.has(url)&&!panelURLs.has(url)&&!exportURLs.has(url))return;
   const result=imageResponse(url);
   event.respondWith(result);
   event.waitUntil(result.then(()=>{},()=>{}));

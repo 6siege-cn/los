@@ -74,3 +74,13 @@ operator; recruit entries derive it from their `recruit_attack_*` or
 保留原件副本 `sources/r6-operator-skills.doc` 以便重新提取；不再保存另一份原始提取 TXT。
 安装开发依赖后可运行 `npm run extract-skills` 和 `npm run build-operators` 重新生成。
 标题别名为 `Kapcan → KAPKAN`、`Mirror → MIRA`。提取脚本只规范格式，不执行或改写技能规则。
+
+## 对局图片的手机兼容导出
+
+网页头像仍使用原 SVG；下载卡片使用 `assets/export/` 中固定 192 × 192 的透明 PNG，
+小标记使用 64 × 64 PNG。统一引用由 `src/config.js` 与生成的 `src/export-assets.js` 管理。
+`npm run optimize-assets` 同步生成这些导出副本；单独重建可用 `npm run build-export-assets`。
+导出等待图片解码，并使用自然尺寸绘制；加载错误或超时会中止下载，不影响本机记录。
+PNG 按需加载并缓存到独立的 export-v1 缓存，不占用面板缓存名额，也不增加干员矩阵的首次预加载量。
+首次导出需要联网；已缓存过的导出素材可复用。更新素材后发布时仍须更新入口脚本版本。
+浏览器回归检查对实际 PNG 的每个选用和禁用头像区域检查非背景像素，覆盖零布局尺寸和延迟解码。

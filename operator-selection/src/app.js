@@ -1,5 +1,5 @@
 import operators from '../data/operators.js?v=recruit-correction-1';
-import {assets,settings} from './config.js?v=match-records-1';
+import {assets,settings} from './config.js?v=png-export-1';
 import {rules,actions} from './rules.js?v=five-ban-1';
 import {createDraft} from './engine.js';
 import {operatorFamily,versionLabel} from './identity.js';
@@ -10,7 +10,7 @@ import {defaultScope,inScope} from './operator-scope.js';
 import {sortOperators,orderModes,defaultOrder} from './operator-order.js?v=unified-settings-1';
 import {installSkillPreview} from './skill-preview.js?v=native-menu-2';
 import {storageKey,captureDraft,restoreDraft,createDraftStorage} from './draft-storage.js';
-import {installMatchRecords} from './match-ui.js?v=mark-popover-1';
+import {installMatchRecords} from './match-ui.js?v=png-export-1';
 let scope={...defaultScope};
 let orderMode=defaultOrder;
 const availableOperators=()=>operators.filter(op=>inScope(op,scope));
