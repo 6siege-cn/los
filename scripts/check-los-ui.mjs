@@ -55,6 +55,40 @@ try {
     await page.locator('#clear-smokes').click();
     await page.locator('#reset-map').click();
     assert.equal(await page.locator('#los-result').isVisible(), false);
+    if (width === 1440) {
+      const clickCell = async (x, y) => {
+        const point = await canvas.evaluate(async (node, cell) => {
+        const maps = await (await fetch('./data/maps.json')).json();
+        const map = maps.find(item => item.id === document.querySelector('#map-select').value);
+        const imageWidth = node.width;
+        const imageHeight = node.height;
+        const availableWidth = imageWidth - map.gridOffset.x - map.gridOffset.right;
+        const availableHeight = imageHeight - map.gridOffset.y - map.gridOffset.bottom;
+        const cellSize = Math.min(
+          availableWidth / map.gridSize.width,
+          availableHeight / map.gridSize.height,
+        );
+        const bounds = node.getBoundingClientRect();
+        return {
+          x: bounds.left + ((map.gridOffset.x + (cell.x + 0.5) * cellSize) / imageWidth) * bounds.width,
+          y: bounds.top + ((map.gridOffset.y + (cell.y + 0.5) * cellSize) / imageHeight) * bounds.height,
+        };
+        }, {x, y});
+        await page.mouse.click(point.x, point.y);
+      };
+      await page.locator('#place-blue').click();
+      await clickCell(0, 0);
+      await page.locator('#place-orange').click();
+      await clickCell(2, 0);
+      await page.locator('[data-smoke-width="1"][data-smoke-height="2"]').click();
+      await clickCell(1, 0);
+      await page.waitForFunction(() =>
+        document.querySelector('#los-result-reason').textContent.includes('烟雾阻挡'),
+      );
+      await page.screenshot({path:join(output, 'smoke-between-nearby-players.png')});
+      assert.match(await page.locator('#los-result-reason').innerText(), /烟雾阻挡/);
+      await page.locator('#reset-map').click();
+    }
     await page.locator('#map-select').selectOption({index:1});
     assert.deepEqual(errors, []);
     console.log(`${width}x${height}: layout, placement, automatic result, smoke, reset and map switching passed`);

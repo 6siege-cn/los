@@ -1,6 +1,5 @@
 const DEFAULT_LINE_THICKNESS = 0.025;
 const PARALLEL_EPSILON = 1e-10;
-const AXIS_ALIGNED_EPSILON = 0.001;
 const DUPLICATE_POINT_EPSILON = 1e-5;
 
 function segmentIntersection(firstStart, firstEnd, secondStart, secondEnd) {
@@ -262,8 +261,6 @@ function segmentHitsSmokeCell(start, end, cellX, cellY) {
 
 function smokeBlocksLine(start, end, smokes, lineThickness) {
   const [positiveEdge, negativeEdge] = stripEdges(start, end, lineThickness);
-  const isHorizontal = Math.abs(end.y - start.y) < AXIS_ALIGNED_EPSILON;
-  const isVertical = Math.abs(end.x - start.x) < AXIS_ALIGNED_EPSILON;
 
   for (const smoke of smokes) {
     for (let dx = 0; dx < smoke.pattern.width; dx += 1) {
@@ -273,20 +270,6 @@ function smokeBlocksLine(start, end, smokes, lineThickness) {
         if (
           (Math.floor(start.x) === cellX && Math.floor(start.y) === cellY) ||
           (Math.floor(end.x) === cellX && Math.floor(end.y) === cellY)
-        ) {
-          continue;
-        }
-        if (
-          isHorizontal &&
-          ((Math.abs(cellX - Math.floor(start.x)) === 1 && cellY === Math.floor(start.y)) ||
-            (Math.abs(cellX - Math.floor(end.x)) === 1 && cellY === Math.floor(end.y)))
-        ) {
-          continue;
-        }
-        if (
-          isVertical &&
-          ((Math.abs(cellY - Math.floor(start.y)) === 1 && cellX === Math.floor(start.x)) ||
-            (Math.abs(cellY - Math.floor(end.y)) === 1 && cellX === Math.floor(end.x)))
         ) {
           continue;
         }
