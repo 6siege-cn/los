@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="彩虹六号：围攻桌游社区统计，查看干员出场率与胜率、地图表现和公开对局。">
+  <title>彩虹六号：围攻 — 社区统计</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles/base.css"><link rel="stylesheet" href="../styles/standalone.css?v=20260907.2">
+  <link rel="stylesheet" href="../styles/match-records.css?v=community-1"><link rel="stylesheet" href="./statistics.css?v=1">
+  <script type="module" src="./app.js?v=1"></script>
+</head>
+<body class="statistics-page">
+  <div class="hidden-layout">
+    <nav class="hidden-nav" aria-label="工具导航"><ul>
+      <li><a href="../index.html">视线测量</a></li><li><a href="../operator-selection/index.html">干员选择</a></li>
+      <li><a href="../chess-clock/index.html">棋钟</a></li><li><a class="active-nav-link" aria-current="page" href="./index.html">社区统计</a></li>
+    </ul></nav>
+    <main class="statistics-main">
+      <header class="statistics-heading"><div><p class="eyebrow">社区对局 · 每小时更新</p><h1>对局表现</h1><p class="lead">从每一局，发现干员与地图的表现。</p></div><div class="update-control"><button id="refresh-statistics" type="button">检查更新</button><p id="snapshot-time">正在读取统计…</p></div></header>
+      <nav class="statistics-tabs" aria-label="社区统计栏目"><button type="button" data-view="overview" aria-current="page">统计首页</button><button type="button" data-view="details">详细统计</button><button type="button" data-view="matches">公开对局</button></nav>
+      <p id="statistics-status" class="statistics-status" role="status" aria-live="polite"></p>
+      <section id="statistics-filters" class="statistics-filters" aria-label="统计筛选"></section>
+      <section id="statistics-content" aria-label="统计结果"></section>
+      <footer class="statistics-footer">图表来自社区主动提交的对局。新增和撤回会在下一次汇总后反映到统计中。<a href="../operator-selection/privacy.html">数据与删除说明</a></footer>
+    </main>
+  </div>
+</body></html>

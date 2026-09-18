@@ -1,4 +1,6 @@
-import {cleanRecord,digest,fingerprint,beijingDay,statistics} from './domain.js';
+import {cleanRecord,digest,fingerprint,beijingDay,catalog} from './domain.js';
+import {readSnapshot,rebuildSnapshot} from './snapshots.js';
+import {aggregateSnapshot} from '../statistics/model.js';
 
 const allowedOrigin='https://6siege-cn.github.io';
 const headers={'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':allowedOrigin,'Access-Control-Allow-Methods':'GET, POST, DELETE, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
@@ -54,12 +56,19 @@ async function remove(request,env,id){
   if(result.at(-1).results[0].owner_hash!==owner)throw fail('没有删除权限',403);
   return json({status:'deleted'});
 }
-export default {async fetch(request,env){
+async function snapshotResponse(request,env,ctx){
+  const key=new Request(new URL('/api/stats-snapshot',request.url)),cache=globalThis.caches?.default;
+  const cached=cache?await cache.match(key):null;if(cached)return cached;
+  const data=await readSnapshot(env.DB,catalog),response=new Response(JSON.stringify(data),{headers:{...headers,'Cache-Control':'public, max-age=300'}});
+  if(cache&&ctx)ctx.waitUntil(cache.put(key,response.clone()).catch(()=>{}));
+  return response;
+}
+export default {async scheduled(event,env){await rebuildSnapshot(env.DB);},async fetch(request,env,ctx){
   try{
     const url=new URL(request.url),path=url.pathname;
     if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
     if(['POST','DELETE'].includes(request.method)&&request.headers.get('Origin')&&request.headers.get('Origin')!==allowedOrigin)throw fail('来源不允许',403);
-    if(path==='/api/health')return json({ok:true,version:1});
+    if(path==='/api/health')return json({ok:true,version:2});
     if(request.method==='POST'&&path==='/api/matches')return await submit(request,env);
     const single=path.match(/^\/api\/matches\/([^/]+)$/);
     if(request.method==='DELETE'&&single)return await remove(request,env,single[1]);
@@ -69,10 +78,11 @@ export default {async fetch(request,env){
       const results=await env.DB.batch([env.DB.prepare('SELECT COUNT(*) AS total FROM matches WHERE deleted=0'),env.DB.prepare('SELECT public_json FROM matches WHERE deleted=0 ORDER BY received_at DESC,id DESC LIMIT ? OFFSET ?').bind(limit,(page-1)*limit)]);
       return json({records:results[1].results.map(r=>JSON.parse(r.public_json)),total:results[0].results[0].total,page,pageSize:limit,updatedAt:new Date().toISOString()});
     }
+    if(request.method==='GET'&&path==='/api/stats-snapshot')return await snapshotResponse(request,env,ctx);
     if(request.method==='GET'&&path==='/api/stats'){
-      const rows=await env.DB.prepare('SELECT public_json FROM matches WHERE deleted=0').all();
+      const snapshot=await (await snapshotResponse(request,env,ctx)).json();
       const filters={mapId:url.searchParams.get('map')||'',ruleId:url.searchParams.get('rule')||'',matchType:url.searchParams.get('type')||'normal',family:url.searchParams.get('family')==='1'};
-      return json({...statistics(rows.results.map(r=>JSON.parse(r.public_json)),filters),filters,updatedAt:new Date().toISOString()});
+      return json({...aggregateSnapshot(snapshot,filters),filters,updatedAt:snapshot.generatedAt});
     }
     return json({error:'接口不存在'},404);
   }catch(error){return json({error:error.status?error.message:'服务暂时不可用，请稍后重试'},error.status||503);}

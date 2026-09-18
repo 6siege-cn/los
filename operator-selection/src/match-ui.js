@@ -1,7 +1,6 @@
 import {createMatchStore,snapshotMatch,validateMatch,presetTags,uniqueTags,tagKey,marks,sideLabels,endings,endRounds,operatorLabel,mapNames,modes,mapLabel,modeLabel,matchTypes} from './match-records.js?v=community-1';
 import {el,renderMatchCard,matchPNG} from './match-card.js?v=winner-theme-1';
 import {startMatchSync,syncLabels} from './match-sync.js';
-import {installCommunityViews} from './community-ui.js';
 export function installMatchRecords(menuButton,{getCurrent,assets}){
   const store=createMatchStore(globalThis.indexedDB);
   const sync=startMatchSync(store);
@@ -15,8 +14,6 @@ export function installMatchRecords(menuButton,{getCurrent,assets}){
   const markerPopover=el('div','match-marker-popover');markerPopover.id='match-marker-popover';markerPopover.setAttribute('role','group');markerPopover.setAttribute('aria-label','选择干员标记');markerPopover.hidden=true;dialog.append(markerPopover);
   if(typeof markerPopover.showPopover==='function')markerPopover.setAttribute('popover','manual');
   let viewToken=0,editor=null,markAnchor=null;
-  const community=installCommunityViews({content,message,changeView,isCurrent:token=>token===viewToken,button,assets});
-  nav.append(button('社区统计',community.stats),button('公开对局',()=>community.matches()));
   function button(label,action){const b=el('button','',label);b.type='button';b.addEventListener('click',action);return b;}
   function message(text){status.textContent=text;}
   function changeView(label){delete dialog.dataset.winner;viewToken++;editor=null;closeMarks();title.textContent=label;content.replaceChildren();message('');dialog.scrollTop=0;return viewToken;}
@@ -57,7 +54,7 @@ export function installMatchRecords(menuButton,{getCurrent,assets}){
     changeView('删除对局');content.append(el('p','','删除后，本地记录无法恢复。'));
     const label=el('label','match-consent'),check=el('input');check.type='checkbox';check.checked=true;
     label.append(check,el('span','','同时删除我提交的云端对局'));content.append(label);
-    content.append(el('p','match-muted','离线时会在下次联网打开网站后自动撤回。判重的记录属于原上传者，不能由你删除。取消勾选后云端保留，本期无法再从本地找回删除凭据。'));
+    content.append(el('p','match-muted','云端撤回成功后公开对局立即移除，统计图表会在后续汇总和缓存更新后反映变化。离线时会在下次联网打开网站后自动撤回。判重的记录属于原上传者，不能由你删除。取消勾选后云端保留，本期无法再从本地找回删除凭据。'));
     const actions=el('div','match-actions'),remove=button('确认删除',async()=>{remove.disabled=true;try{await store.remove(record.id,{cloud:check.checked});void sync();await history();}catch(error){remove.disabled=false;fail(error);}});
     actions.append(remove,button('取消',()=>detail(record)));content.append(actions);
   }

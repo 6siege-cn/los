@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,readdirSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import worker from '../cloud/worker.js';
 import {statistics,cleanRecord,fingerprint,beijingDay} from '../cloud/domain.js';
@@ -8,6 +8,9 @@ import {createDraft} from '../operator-selection/src/engine.js';
 import {rules} from '../operator-selection/src/rules.js';
 import operators from '../operator-selection/data/operators.js';
 import {snapshotMatch} from '../operator-selection/src/match-records.js';
+import {rebuildSnapshot,readSnapshot} from '../cloud/snapshots.js';
+import {catalog} from '../cloud/domain.js';
+import {aggregateSnapshot} from '../statistics/model.js';
 
 export function fixture(overrides={}){
   const draft=createDraft(rules.standard,operators.filter(op=>op.version==='off'));
@@ -15,7 +18,7 @@ export function fixture(overrides={}){
   return {...snapshotMatch({state:draft.snapshot(),ruleId:'standard',rule:rules.standard,scope:{alt:false,diy:false},orderMode:'time',operators},crypto.randomUUID(),new Date().toISOString()),mapId:'consulate',mode:'炸弹模式',winner:'attack',ending:'歼灭敌方',endRound:'3',matchType:'normal',players:{attack:'私人昵称',defense:'另一昵称'},notes:'私人备注',...overrides};
 }
 function database(){
-  const db=new DatabaseSync(':memory:');db.exec(readFileSync(new URL('../cloud/migrations/0001_matches.sql',import.meta.url),'utf8'));
+  const db=new DatabaseSync(':memory:');for(const file of readdirSync(new URL('../cloud/migrations/',import.meta.url)).filter(n=>n.endsWith('.sql')).sort())db.exec(readFileSync(new URL('../cloud/migrations/'+file,import.meta.url),'utf8'));
   function prepare(sql,params=[]){const run=()=>{const stmt=db.prepare(sql);return stmt.columns().length?stmt.all(...params):((stmt.run(...params)),[]);};return {bind:(...values)=>prepare(sql,values),first:async()=>run()[0]??null,all:async()=>({results:run()}),run};}
   return {db,env:{IP_HASH_SALT:'test-only-salt',DB:{prepare,batch:async statements=>{db.exec('BEGIN');try{const values=statements.map(s=>({results:s.run()}));db.exec('COMMIT');return values;}catch(error){db.exec('ROLLBACK');throw error;}}}}};
 }
@@ -75,4 +78,36 @@ test('API fails closed on missing configuration, foreign origins, bad tokens and
   const foreign=request('POST','/api/matches',r);foreign.headers.set('Origin','https://untrusted.test');assert.equal((await worker.fetch(foreign,env)).status,403);
   assert.equal((await worker.fetch(request('POST','/api/matches',{...r,notes:'x'.repeat(40000)}),env)).status,413);
   delete env.IP_HASH_SALT;assert.equal((await worker.fetch(request('POST','/api/matches',r),env)).status,503);
+});
+
+test('snapshot publishes SQL aggregates only on change and matches the original statistics',async()=>{
+  const {env,db}=database(),records=[fixture(),fixture({mapId:'bank',winner:'defense',scope:{alt:true,diy:false}}),fixture({mapId:'bank',matchType:'teaching'})];
+  for(const r of records)assert.equal((await send(env,r)).status,'uploaded');
+  assert.equal((await get(env,'/api/stats')).total,0);
+  assert.equal(await rebuildSnapshot(env.DB,'2026-09-18T10:00:00.000Z'),true);
+  const snapshot=await get(env,'/api/stats-snapshot');assert.equal(snapshot.buckets.length,3);assert.ok(!JSON.stringify(snapshot).includes('私人'));
+  for(const filters of [{},{mapId:'bank'},{matchType:'all'},{matchType:'teaching'},{family:true},{ruleId:'fiveBan'}]){
+    const actual=aggregateSnapshot(snapshot,filters),expected=statistics(records.map(r=>cleanRecord(r).record),filters);
+    assert.equal(actual.total,expected.total);assert.equal(actual.attackWinRate,expected.attackWinRate);
+    for(const row of expected.operators){const got=actual.operators.find(r=>r.id===row.id);for(const key of ['picks','wins','bans','eligible','pickRate','winRate','banRate','bpRate'])assert.equal(got[key],row[key],row.id+' '+key);}
+  }
+  await worker.fetch(request('DELETE','/api/matches/'+records[0].id),env);
+  assert.equal((await get(env,'/api/matches')).total,2);assert.equal((await get(env,'/api/stats')).total,2);
+  await worker.scheduled({},env);assert.equal((await get(env,'/api/stats')).total,1);
+  const published=await readSnapshot(env.DB,catalog);
+  db.exec('DROP VIEW stats_source_buckets');
+  assert.equal(await rebuildSnapshot(env.DB,'2026-09-18T12:00:00.000Z'),false);
+  const unchanged=await readSnapshot(env.DB,catalog);assert.equal(unchanged.generatedAt,published.generatedAt);assert.equal(unchanged.checkedAt,'2026-09-18T12:00:00.000Z');
+  db.exec('UPDATE stats_state SET revision=revision+1');
+  await assert.rejects(rebuildSnapshot(env.DB));assert.deepEqual(await readSnapshot(env.DB,catalog),unchanged);
+  db.close();
+});
+
+test('snapshot migration bootstraps pre-existing records and concurrent rebuilds preserve totals',async()=>{
+  const {env,db}=database();await send(env,fixture());
+  db.exec('DROP TRIGGER stats_insert; DROP TRIGGER stats_delete; DROP VIEW stats_source_buckets; DROP TABLE stats_buckets; DROP TABLE stats_meta; DROP TABLE stats_state;');
+  db.exec(readFileSync(new URL('../cloud/migrations/0002_statistics_snapshots.sql',import.meta.url),'utf8'));
+  assert.equal(aggregateSnapshot(await readSnapshot(env.DB,catalog)).total,1);
+  await send(env,fixture({mapId:'bank'}));await Promise.all([rebuildSnapshot(env.DB),rebuildSnapshot(env.DB)]);
+  assert.equal(aggregateSnapshot(await readSnapshot(env.DB,catalog)).total,2);db.close();
 });
