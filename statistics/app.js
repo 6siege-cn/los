@@ -1,10 +1,10 @@
-import {createSnapshotClient} from './cache.js';
-import {aggregateSnapshot} from './model.js';
-import {renderChart,percentage} from './chart.js';
+import {createSnapshotClient} from './cache.js?v=history-1';
+import {aggregateSnapshot} from './model.js?v=history-1';
+import {renderChart,percentage} from './chart.js?v=history-1';
 import {el} from '../operator-selection/src/match-card.js?v=winner-theme-1';
 import {assets} from '../operator-selection/src/config.js';
 import {mapNames,modes,matchTypes} from '../operator-selection/src/match-records.js?v=community-1';
-import {installCommunityViews} from '../operator-selection/src/community-ui.js?v=statistics-2';
+import {installCommunityViews} from '../operator-selection/src/community-ui.js?v=history-1';
 
 const content=document.querySelector('#statistics-content'),filters=document.querySelector('#statistics-filters'),status=document.querySelector('#statistics-status'),time=document.querySelector('#snapshot-time'),refresh=document.querySelector('#refresh-statistics');
 let storage;try{storage=localStorage;}catch{}
@@ -14,10 +14,10 @@ const controls={};
 function button(label,action){const b=el('button','',label);b.type='button';b.addEventListener('click',action);return b;}
 function select(key,label,items,initial){const wrap=el('label'),input=el('select');input.name=key;input.setAttribute('aria-label',label);for(const [value,text] of items){const option=el('option','',text);option.value=value;input.append(option);}input.value=initial;wrap.append(el('span','',label),input);filters.append(wrap);controls[key]=input;input.addEventListener('change',()=>{operatorPage=1;render();});}
 select('mapId','地图',[['','全部地图'],...Object.entries(mapNames)],'');
-select('ruleId','规则',[['','全部规则'],['standard','标准规则'],['fiveBan','5ban']],'');
-select('mode','模式',[['','全部模式'],...modes.map(m=>[m,m])],'');
+select('ruleId','规则',[['','全部规则'],['standard','标准规则'],['fiveBan','5ban'],['historical','历史规则未确认']],'');
+select('mode','模式',[['','全部模式'],...modes.map(m=>[m,m]),['模式未记录','模式未记录']],'');
 select('matchType','对局类型',Object.entries(matchTypes).concat([['all','全部类型']]),'normal');
-select('version','干员版本',[['','全部版本'],['off','OFF'],['alt','ALT'],['diy','DIY']],'');
+select('version','干员版本',[['','全部版本'],['off','OFF'],['alt','ALT'],['diy','DIY'],['legacy','历史独立干员']],'');
 select('family','版本统计',[['0','分别统计'],['1','同名合并']],'0');
 select('minimum','最低出场',[['1','至少 1 次'],['5','至少 5 次'],['10','至少 10 次'],['20','至少 20 次'],['0','全部干员']],'1');
 function values(){return {...Object.fromEntries(Object.entries(controls).map(([key,input])=>[key,input.value])),family:controls.family.value==='1'};}
@@ -32,6 +32,7 @@ function render(){
   const visible=data.operators.filter(op=>op.picks>=Number(f.minimum));
   for(const [label,value] of [['有效对局',data.total],['进攻胜率',percentage(data.attackWinRate)],['防守胜率',percentage(data.total?data.defenseWins/data.total:null)],['有出场的干员',visible.filter(op=>op.picks>0).length]]){const card=el('div');card.append(el('span','',label),el('strong','',String(value)));summary.append(card);}content.append(summary);
   const scope=el('p','statistics-scope',Object.values(controls).map(c=>c.selectedOptions[0].textContent).join(' · '));content.append(scope);
+  if(data.historicalTotal)content.append(el('p','statistics-scope',`包含 ${data.historicalTotal} 局表格历史数据。历史干员池未记录，出场率按所选历史局数计算；${data.missingBans} 局未记录禁用，不计入禁用率分母，存在缺失时不显示 BP率。历史规则、模式未确认的记录可单独筛选。`));
   if(view==='overview'){
     const maxPick=Math.max(.1,...visible.map(op=>op.pickRate??0)),xMax=Math.min(1,Math.max(.2,Math.ceil((maxPick+.04)*10)/10));
     const pair=el('div','chart-pair');for(const side of ['attack','defense'])pair.append(renderChart(visible.filter(op=>op.side===side),side,xMax));content.append(pair);
@@ -44,10 +45,10 @@ function render(){
   function field(label,items,value,change){const wrap=el('label'),input=el('select');input.setAttribute('aria-label',label);for(const [key,text] of items){const op=el('option','',text);op.value=key;input.append(op);}input.value=value;input.addEventListener('change',()=>{change(input.value);operatorPage=1;render();});wrap.append(el('span','',label),input);toolbar.append(wrap);}
   field('阵营',[['attack','进攻'],['defense','防守']],side,v=>side=v);field('排序',[['picks','出场数'],['pickRate','出场率'],['wins','获胜数'],['winRate','胜率'],['bans','禁用数'],['banRate','禁用率'],['bpRate','BP率']],sortKey,v=>sortKey=v);content.append(toolbar);
   const rows=visible.filter(op=>op.side===side).sort((a,b)=>(b[sortKey]??-1)-(a[sortKey]??-1)||b.picks-a.picks||a.name.localeCompare(b.name)),pages=Math.max(1,Math.ceil(rows.length/20));operatorPage=Math.min(operatorPage,pages);
-  content.append(table(['干员','出场','出场率','获胜','胜率','禁用','禁用率','BP率','可选局数'],rows.slice((operatorPage-1)*20,operatorPage*20).map(op=>[op.name+(op.version==='family'?' · 合并':' · '+op.version.toUpperCase()),op.picks,percentage(op.pickRate),op.wins,percentage(op.winRate),op.bans,percentage(op.banRate),percentage(op.bpRate),op.eligible])));
+  content.append(table(['干员','出场','出场率','获胜','胜率','禁用','禁用率','BP率','出场率分母','禁用率分母'],rows.slice((operatorPage-1)*20,operatorPage*20).map(op=>[op.name+(op.version==='family'?' · 合并':op.version==='legacy'?' · 历史':' · '+op.version.toUpperCase()),op.picks,percentage(op.pickRate),op.wins,percentage(op.winRate),op.bans,percentage(op.banRate),percentage(op.bpRate),op.eligible,op.banEligible])));
   if(!rows.length)content.append(el('p','match-empty','当前筛选下没有足够的样本。'));
   const pager=el('div','match-actions'),prev=button('上一页',()=>{operatorPage--;render();}),next=button('下一页',()=>{operatorPage++;render();});prev.disabled=operatorPage===1;next.disabled=operatorPage===pages;pager.append(prev,el('span','',`第 ${operatorPage} / ${pages} 页`),next);content.append(pager);
-  content.append(el('p','statistics-scope','胜率以出场数为分母；出场率、禁用率、BP率以干员可参与的有效对局为分母。同名版本先合并计数，再计算比例。'));
+  content.append(el('p','statistics-scope','胜率以出场数为分母。网页新提交的出场率按可参与对局数计算，历史记录按所选历史局数计算。禁用率只统计有禁用记录的对局，缺失禁用时 BP率不提供。同名版本先合并计数，再计算比例。'));
 }
 function updateTime(){time.textContent=snapshot?`数据生成于 ${new Date(snapshot.generatedAt).toLocaleString('zh-CN',{hour12:false})} · 最近核对 ${new Date(snapshot.checkedAt).toLocaleString('zh-CN',{hour12:false})}`:'暂无统计快照';}
 function refreshState(){clearTimeout(refreshTimer);const remaining=cooldown-Date.now();refresh.disabled=remaining>0;refresh.textContent=remaining>0?'稍后可检查更新':'检查更新';refresh.title=remaining>0?'为减少请求，5 分钟内不重复检查。':'获取已发布的统计，不触发重新计算。';if(remaining>0)refreshTimer=setTimeout(refreshState,remaining+50);}

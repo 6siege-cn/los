@@ -7,7 +7,9 @@ import worker from '../cloud/worker.js';
 import {rebuildSnapshot} from '../cloud/snapshots.js';
 const root=resolve(import.meta.dirname,'..');
 await mkdir(resolve(root,'.wrangler'),{recursive:true});
-const db=new DatabaseSync(resolve(root,'.wrangler/community-local.sqlite'));
+const dbPath=resolve(root,process.argv[2]||'.wrangler/community-local.sqlite');
+if(!dbPath.startsWith(resolve(root,'.wrangler')+sep))throw Error('Preview databases must stay in .wrangler');
+const db=new DatabaseSync(dbPath);
 db.exec('CREATE TABLE IF NOT EXISTS local_migrations(name TEXT PRIMARY KEY)');
 for(const name of (await readdir(resolve(root,'cloud/migrations'))).filter(n=>n.endsWith('.sql')).sort())if(!db.prepare('SELECT 1 FROM local_migrations WHERE name=?').get(name)){
   db.exec('BEGIN');try{db.exec(await readFile(resolve(root,'cloud/migrations',name),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run(name);db.exec('COMMIT');}catch(error){db.exec('ROLLBACK');throw error;}

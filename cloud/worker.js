@@ -1,6 +1,7 @@
 import {cleanRecord,digest,fingerprint,beijingDay,catalog} from './domain.js';
 import {readSnapshot,rebuildSnapshot} from './snapshots.js';
 import {aggregateSnapshot} from '../statistics/model.js';
+import {historicalCatalog} from './historical-catalog.js';
 
 const allowedOrigin='https://6siege-cn.github.io';
 const headers={'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':allowedOrigin,'Access-Control-Allow-Methods':'GET, POST, DELETE, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
@@ -57,9 +58,9 @@ async function remove(request,env,id){
   return json({status:'deleted'});
 }
 async function snapshotResponse(request,env,ctx){
-  const key=new Request(new URL('/api/stats-snapshot',request.url)),cache=globalThis.caches?.default;
+  const key=new Request(new URL('/api/stats-snapshot?v=2',request.url)),cache=globalThis.caches?.default;
   const cached=cache?await cache.match(key):null;if(cached)return cached;
-  const data=await readSnapshot(env.DB,catalog),response=new Response(JSON.stringify(data),{headers:{...headers,'Cache-Control':'public, max-age=300'}});
+  const data=await readSnapshot(env.DB,[...catalog,...historicalCatalog]),response=new Response(JSON.stringify(data),{headers:{...headers,'Cache-Control':'public, max-age=300'}});
   if(cache&&ctx)ctx.waitUntil(cache.put(key,response.clone()).catch(()=>{}));
   return response;
 }
@@ -68,7 +69,7 @@ export default {async scheduled(event,env){await rebuildSnapshot(env.DB);},async
     const url=new URL(request.url),path=url.pathname;
     if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
     if(['POST','DELETE'].includes(request.method)&&request.headers.get('Origin')&&request.headers.get('Origin')!==allowedOrigin)throw fail('来源不允许',403);
-    if(path==='/api/health')return json({ok:true,version:2});
+    if(path==='/api/health')return json({ok:true,version:3});
     if(request.method==='POST'&&path==='/api/matches')return await submit(request,env);
     const single=path.match(/^\/api\/matches\/([^/]+)$/);
     if(request.method==='DELETE'&&single)return await remove(request,env,single[1]);

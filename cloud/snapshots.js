@@ -13,6 +13,6 @@ export async function rebuildSnapshot(db,now=new Date().toISOString()){
 export async function readSnapshot(db,catalog){
   const results=await db.batch([db.prepare('SELECT revision,generated_at,checked_at FROM stats_meta WHERE id=1'),db.prepare('SELECT key,total,attack_wins,operators FROM stats_buckets ORDER BY key')]);
   const meta=results[0].results[0];if(!meta)throw Error('统计结果尚未生成');
-  return {schemaVersion:1,revision:meta.revision,generatedAt:meta.generated_at,checkedAt:meta.checked_at,catalog,
+  return {schemaVersion:2,revision:meta.revision,generatedAt:meta.generated_at,checkedAt:meta.checked_at,catalog,
     buckets:results[1].results.map(row=>({key:JSON.parse(row.key),total:row.total,attackWins:row.attack_wins,operators:JSON.parse(row.operators)}))};
 }

@@ -1,8 +1,9 @@
-import {chartSummary} from './model.js';
+import {chartSummary} from './model.js?v=history-1';
 import {el} from '../operator-selection/src/match-card.js?v=winner-theme-1';
 import {assets} from '../operator-selection/src/config.js';
 export const percentage=value=>value===null?'—':(value*100).toFixed(1)+'%';
 const svgNS='http://www.w3.org/2000/svg';
+const versionLabel=row=>row.version==='family'?'同名合并':row.version==='legacy'?'历史版本':row.version.toUpperCase();
 function svg(tag,attributes){const node=document.createElementNS(svgNS,tag);for(const [key,value] of Object.entries(attributes))node.setAttribute(key,value);return node;}
 export function renderChart(rows,side,xMax){
   const summary=chartSummary(rows),card=el('article','scatter-card'),head=el('header','scatter-heading'),name=side==='attack'?'进攻方':'防守方';
@@ -20,16 +21,16 @@ export function renderChart(rows,side,xMax){
   const targets=[];
   function inspect(row){
     for(const [op,b] of targets)b.setAttribute('aria-pressed',String(op.id===row.id));
-    inspector.replaceChildren();const label=row.name+(row.version==='family'?' · 同名合并':' · '+row.version.toUpperCase());
-    inspector.append(el('strong','',label),el('p','',`出场 ${row.picks} 次 · 获胜 ${row.wins} 次 · 可选 ${row.eligible} 局`),el('p','',`出场率 ${percentage(row.pickRate)} · 胜率 ${percentage(row.winRate)} · 禁用 ${row.bans} 次（${percentage(row.banRate)}） · BP率 ${percentage(row.bpRate)}`));
+    inspector.replaceChildren();const label=row.name+' · '+versionLabel(row);
+    inspector.append(el('strong','',label),el('p','',`出场 ${row.picks} 次 · 获胜 ${row.wins} 次 · 统计分母 ${row.eligible} 局`),el('p','',`出场率 ${percentage(row.pickRate)} · 胜率 ${percentage(row.winRate)} · 禁用 ${row.bans} 次（${percentage(row.banRate)}，分母 ${row.banEligible} 局） · BP率 ${percentage(row.bpRate)}`));
     if(row.picks<5)inspector.append(el('p','sample-warning','样本少于 5 次，仅供参考。'));
     const rect=plot.getBoundingClientRect(),near=summary.rows.filter(op=>Math.abs(op.pickRate-row.pickRate)/xMax*rect.width<38&&Math.abs(op.winRate-row.winRate)*rect.height<38);
-    if(near.length>1){const list=el('div','overlap-options');list.append(el('span','','附近干员：'));for(const op of near){const b=el('button','',op.name+(op.version==='family'?'':' · '+op.version.toUpperCase()));b.type='button';b.setAttribute('aria-pressed',String(op.id===row.id));b.addEventListener('click',()=>inspect(op));list.append(b);}inspector.append(list);}
+    if(near.length>1){const list=el('div','overlap-options');list.append(el('span','','附近干员：'));for(const op of near){const b=el('button','',op.name+' · '+versionLabel(op));b.type='button';b.setAttribute('aria-pressed',String(op.id===row.id));b.addEventListener('click',()=>inspect(op));list.append(b);}inspector.append(list);}
   }
   for(const row of summary.rows){
-    const point=el('button','scatter-point');point.type='button';point.style.left=row.pickRate/xMax*100+'%';point.style.top=(1-row.winRate)*100+'%';point.dataset.sample=row.picks<5?'low':'normal';point.setAttribute('aria-label',`${row.name} ${row.version==='family'?'同名合并':row.version.toUpperCase()}，出场 ${row.picks} 次，胜率 ${percentage(row.winRate)}`);point.setAttribute('aria-pressed','false');
-    const img=el('img');img.src=assets.avatarURL(row.avatar);img.alt='';img.loading='lazy';point.append(img);
-    if(!['off','family'].includes(row.version))point.append(el('span','point-version',row.version.toUpperCase()));
+    const point=el('button','scatter-point');point.type='button';point.style.left=row.pickRate/xMax*100+'%';point.style.top=(1-row.winRate)*100+'%';point.dataset.sample=row.picks<5?'low':'normal';point.setAttribute('aria-label',`${row.name} ${versionLabel(row)}，出场 ${row.picks} 次，胜率 ${percentage(row.winRate)}`);point.setAttribute('aria-pressed','false');
+    if(row.avatar){const img=el('img');img.src=assets.avatarURL(row.avatar);img.alt='';img.loading='lazy';point.append(img);}else point.append(el('span','historical-initials',row.name.slice(0,3)));
+    if(!['off','family'].includes(row.version))point.append(el('span','point-version',row.version==='legacy'?'历史':row.version.toUpperCase()));
     point.addEventListener('click',()=>inspect(row));point.addEventListener('mouseenter',()=>inspect(row));point.addEventListener('focus',()=>inspect(row));targets.push([row,point]);plot.append(point);
   }
   if(!summary.rows.length)plot.append(el('div','scatter-empty','暂无数据'));

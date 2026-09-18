@@ -32,3 +32,18 @@ Cloudflare Cron 每小时整点执行一次。新增和撤回触发数据修订�
 本地预览运行 `node scripts/dev-community.mjs`，只使用 `.wrangler/community-local.sqlite`。本地专用 `POST /api/local/rebuild` 可立即发布测试快照，生产没有此入口。真实 Worker 集成测试先应用本地迁移，再用 `wrangler dev --test-scheduled --config cloud/wrangler.jsonc --port 8790` 启动，执行 `node scripts/check-community-api.mjs`。
 
 运行 `node --test` 检查服务实际 SQL、权限、额度、并发、统计口径及 IndexedDB 迁移/队列。CI 在部署前运行这些检查。生产数据备份可通过 Cloudflare D1 控制台导出；本期无定时备份及管理后台。
+
+## 管理员导入旧表格
+
+1. `python scripts/read-match-xlsx.py 对局日志.xlsx .wrangler/history-source.json` 只读取原表单元格，兼容非标准样式，不修改源文件。
+2. `node scripts/prepare-history-import.mjs 对局日志.xlsx .wrangler/history-source.json .wrangler/history-import-YYYYMMDD` 生成核对报告、导入 SQL、撤回 SQL 和管理凭据。输出强制留在忽略目录；不得提交或发布原始数据、SQL、凭据。
+3. 审核 `audit.md`，在单独本地数据库执行两次 `import.sql`，核对记录数、胜负、规则、阵容和快照。先应用全部迁移。可用 `node scripts/dev-community.mjs .wrangler/history-preview.sqlite` 预览。
+4. 导出远程备份，再通过 `wrangler d1 execute six-siege-matches --remote --config cloud/wrangler.jsonc --file <import.sql>` 导入；文件末尾会发布更新快照。备份和导入材料均仅保存在 `.wrangler/`。
+
+导入通过管理员数据库权限执行，公开提交端点仍严格校验网页选禁规则、独立凭据及 IP 额度。历史记录保存为独立来源的版本 3，不伪造网页选禁过程。昵称、备注继续留在私人字段。日期明确时按原日期与规范化阵容去重；日期不明时只合并来源内容相同的记录，不猜测日期。稳定提交编号与唯一约束防止重复执行增加统计。被撤回的导入记录不会因重新执行而复活。
+
+5b / 5ban 识别为 5ban；未注明时，双方各 5 个禁用识别为 5ban，各 2 个识别为标准规则，其余标为历史规则未确认。禁用列表示被禁方，转换为网站的执行方字段。教学（含萌新、推新）、测试、封盘、数据不足、未完成阵容、未知地图、重复干员、阵营错误和不对称禁用被排除。普通操作失误与运气不作为排除依据。未知干员必须有显式历史字典映射，不能任意拼接目录或冒充当前版本。
+
+快照版本 2 增加历史来源、禁用完整性两个分桶维度。历史范围未知，历史出场频率以所选历史局数计算，并在界面说明；网页记录仍按可参与范围。历史独立干员不会进入网页对局分母。禁用率只以有禁用记录的样本为分母；选中存在禁用缺失的对局时，BP率显示为不可用。完整汇总与未知模式、历史规则可分别筛选。
+
+撤回时审核对应批次的 `rollback.sql` 再执行；它只撤回该管理凭据和源文件摘要匹配的记录，并发布新快照。保留最少墓碑防重，不波及网页用户或其他批次。
