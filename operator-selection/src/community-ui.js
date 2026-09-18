@@ -1,5 +1,5 @@
 import {el,renderMatchCard} from './match-card.js?v=winner-theme-1';
-import {mapNames,mapLabel,modeLabel,sideLabels,matchTypes} from './match-records.js';
+import {mapNames,mapLabel,modeLabel,sideLabels,matchTypes} from './match-records.js?v=community-1';
 import {API} from './match-sync.js';
 
 const percent=value=>value===null?'—':(value*100).toFixed(1)+'%';
