@@ -1,0 +1,13 @@
+{
+  "name": "six-siege-api",
+  "main": "worker.js",
+  "compatibility_date": "2026-09-01",
+  "account_id": "adfec8af927f3cf730c86ab2b8ef1a66",
+  "workers_dev": true,
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "six-siege-matches",
+    "database_id": "d60504da-3f20-497a-bfed-8d59384f5279",
+    "migrations_dir": "migrations"
+  }]
+}

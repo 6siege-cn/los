@@ -4,6 +4,7 @@ export const modes=Object.freeze(['炸弹模式','人质模式','肃清威胁'])
 export const mapLabel=record=>mapNames[record.mapId]||(record.version===1?'地图未记录':'地图待选');
 export const modeLabel=record=>record.mode||(record.version===1?'模式未记录':'模式待选');
 export const presetTags=Object.freeze(['RUSH','偷人','好运','超时','白给']);
+export const matchTypes=Object.freeze({normal:'普通',teaching:'教学',test:'测试',incomplete:'数据不完整'});
 export const marks=Object.freeze({'thumbs-up':'向上大拇指','thumbs-down':'向下大拇指',skull:'骷髅头',crosshair:'瞄准准星'});
 export const sideLabels=Object.freeze({attack:'进攻方',defense:'防守方'});
 export const endings=Object.freeze(['拆除炸弹','歼灭敌方','对手投降','解救人质','时间用尽','计分获胜']);
@@ -38,6 +39,9 @@ export function validateMatch(record){
   if(new Set(record.history.map(e=>e.operatorId)).size!==record.history.length)throw Error('对局含重复干员');
   for(const [id,mark] of Object.entries(record.marks??{}))if(!selected.includes(id)||!Object.hasOwn(marks,mark))throw Error('干员标记无效');
   const tags=uniqueTags(record.tags??[]);if(tags.length>20)throw Error('每局最多 20 个标签');
+  if(record.matchType!==undefined&&!Object.hasOwn(matchTypes,record.matchType))throw Error('对局类型无效');
+  for(const side of ['attack','defense'])if(record.players?.[side]!==undefined&&(typeof record.players[side]!=='string'||record.players[side].length>40))throw Error('玩家昵称最多 40 个字符');
+  if(record.notes!==undefined&&(typeof record.notes!=='string'||record.notes.length>1000))throw Error('备注最多 1000 个字符');
   return structuredClone({...record,tags});
 }
 export const scopeLabel=scope=>['OFF',...(scope.alt?['ALT']:[]),...(scope.diy?['DIY']:[])].join(' / ');
@@ -49,8 +53,8 @@ export function createMatchStore(indexedDB){
   let database;
   function open(){return database??=new Promise((resolve,reject)=>{
     if(!indexedDB){reject(Error('浏览器不支持本地对局存储'));return;}
-    const request=indexedDB.open('six-siege-los-match-records',1);
-    request.onupgradeneeded=()=>{const db=request.result;db.createObjectStore('matches',{keyPath:'id'});db.createObjectStore('tags',{keyPath:'key'});};
+    const request=indexedDB.open('six-siege-los-match-records',2);
+    request.onupgradeneeded=()=>{const db=request.result;for(const [name,keyPath] of [['matches','id'],['tags','key'],['outbox','id'],['nicknames','key']])if(!db.objectStoreNames.contains(name))db.createObjectStore(name,{keyPath});};
     request.onsuccess=()=>{const db=request.result;db.onversionchange=()=>db.close();resolve(db);};
     request.onerror=()=>reject(request.error);request.onblocked=()=>reject(Error('请关闭其他旧页面后重试'));
   });}
@@ -58,10 +62,33 @@ export function createMatchStore(indexedDB){
   return {
     async records(){return (await list('matches')).sort((a,b)=>b.savedAt.localeCompare(a.savedAt)||b.id.localeCompare(a.id));},
     async tags(){return uniqueTags([...presetTags,...(await list('tags')).map(tag=>tag.label)]);},
-    async save(value){const record=validateMatch(value),db=await open();return new Promise((resolve,reject)=>{
-      const tx=db.transaction(['matches','tags'],'readwrite');tx.objectStore('matches').add(record);
+    async nicknames(){return (await list('nicknames')).sort((a,b)=>b.usedAt.localeCompare(a.usedAt)).slice(0,100).map(n=>n.label);},
+    async pending(){return list('outbox');},
+    async save(value,{upload=false}={}){const record=validateMatch(value),db=await open();
+      if(upload){const token=[...crypto.getRandomValues(new Uint8Array(32))].map(n=>n.toString(16).padStart(2,'0')).join('');record.cloud={token,status:'pending'};}
+      return new Promise((resolve,reject)=>{
+      const tx=db.transaction(['matches','tags','outbox','nicknames'],'readwrite');tx.objectStore('matches').add(record);
       for(const label of record.tags)tx.objectStore('tags').put({key:tagKey(label),label});
+      for(const name of Object.values(record.players??{})){const label=normalizeTag(name);if(label)tx.objectStore('nicknames').put({key:tagKey(label),label,usedAt:record.savedAt});}
+      if(upload)tx.objectStore('outbox').put({id:record.id,token:record.cloud.token,action:'upload',record,attempts:0,nextAt:0});
       tx.oncomplete=()=>resolve(record);tx.onabort=()=>reject(tx.error??Error('保存失败'));tx.onerror=()=>reject(tx.error);
+    });}
+    ,async remove(id,{cloud=true}={}){const db=await open();return new Promise((resolve,reject)=>{
+      const tx=db.transaction(['matches','outbox'],'readwrite'),matches=tx.objectStore('matches'),outbox=tx.objectStore('outbox'),get=matches.get(id);
+      get.onsuccess=()=>{const record=get.result;if(!record)return;
+        matches.delete(id);outbox.delete(id);
+        // A tombstone also cancels an upload that may currently be in flight.
+        if(cloud&&record.cloud?.token)outbox.put({id,token:record.cloud.token,action:'delete',attempts:0,nextAt:0});
+      };
+      tx.oncomplete=()=>resolve();tx.onabort=()=>reject(tx.error);tx.onerror=()=>reject(tx.error);
+    });}
+    ,async settle(job,{status,retryAt=0}){const db=await open();return new Promise((resolve,reject)=>{
+      const tx=db.transaction(['matches','outbox'],'readwrite'),outbox=tx.objectStore('outbox'),matches=tx.objectStore('matches'),get=outbox.get(job.id);
+      get.onsuccess=()=>{const current=get.result;if(!current||current.action!==job.action||current.token!==job.token)return;
+        if(retryAt)outbox.put({...current,attempts:current.attempts+1,nextAt:retryAt});else outbox.delete(job.id);
+        const local=matches.get(job.id);local.onsuccess=()=>{if(local.result?.cloud?.token===job.token)matches.put({...local.result,cloud:{...local.result.cloud,status:retryAt?'pending':status}});};
+      };
+      tx.oncomplete=()=>resolve();tx.onabort=()=>reject(tx.error);tx.onerror=()=>reject(tx.error);
     });}
   };
 }

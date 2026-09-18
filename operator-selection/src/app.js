@@ -10,7 +10,7 @@ import {defaultScope,inScope} from './operator-scope.js';
 import {sortOperators,orderModes,defaultOrder} from './operator-order.js?v=unified-settings-1';
 import {installSkillPreview} from './skill-preview.js?v=native-menu-2';
 import {storageKey,captureDraft,restoreDraft,createDraftStorage} from './draft-storage.js';
-import {installMatchRecords} from './match-ui.js?v=winner-theme-1';
+import {installMatchRecords} from './match-ui.js?v=community-1';
 let scope={...defaultScope};
 let orderMode=defaultOrder;
 const availableOperators=()=>operators.filter(op=>inScope(op,scope));
