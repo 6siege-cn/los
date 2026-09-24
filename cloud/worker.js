@@ -15,11 +15,17 @@ async function identity(request,id){
   return digest(token);
 }
 async function administrator(request,env){
-  if(!env.ADMIN_PASSWORD)throw fail('管理员功能尚未配置',503);
-  const supplied=request.headers.get('Authorization')?.replace(/^Bearer /,'')??'';
-  const [actual,expected]=await Promise.all([digest(supplied),digest(env.ADMIN_PASSWORD)]);
-  let difference=0;for(let i=0;i<expected.length;i++)difference|=actual.charCodeAt(i)^expected.charCodeAt(i);
-  if(!supplied||difference)throw fail('管理员密码错误',401);
+  if(!env.ADMIN_ACCOUNTS)throw fail('管理员功能尚未配置',503);
+  let config;try{config=JSON.parse(env.ADMIN_ACCOUNTS);}catch{throw fail('管理员功能尚未配置',503);}
+  const accounts=Array.isArray(config.accounts)?config.accounts:[];
+  if(config.algorithm!=='SHA-256'||!accounts.length)throw fail('管理员功能尚未配置',503);
+  const password=request.headers.get('Authorization')?.replace(/^Bearer /,'')??'';let matched=false;
+  for(const account of accounts){const actual=await digest(String(account.salt??'')+'|'+password);
+    const expected=String(account.hash??'').padEnd(64,'0').slice(0,64);let difference=0;
+    for(let i=0;i<64;i++)difference|=(actual.charCodeAt(i)||0)^expected.charCodeAt(i);
+    if(!difference)matched=true;
+  }
+  if(!password||!matched)throw fail('管理员密码错误',401);
 }
 async function readJSON(request){
   if(!request.headers.get('Content-Type')?.startsWith('application/json'))throw fail('需要 JSON 数据',415);

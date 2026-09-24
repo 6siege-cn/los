@@ -26,6 +26,10 @@ const token='a'.repeat(64);
 function request(method,path,body,auth=token,ip='192.0.2.1') {return new Request('https://example.test'+path,{method,headers:{'Content-Type':'application/json',Authorization:'Bearer '+auth,'CF-Connecting-IP':ip},body:body?JSON.stringify(body):undefined});}
 async function send(env,record,auth=token,ip){return (await worker.fetch(request('POST','/api/matches',record,auth,ip),env)).json();}
 const get=async(env,path)=>(await worker.fetch(request('GET',path),env)).json();
+async function adminAccountSecret(accounts){
+  const values=[];for(const [username,password] of Object.entries(accounts)){const salt=Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64'),hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+'|'+password));values.push({username,salt,hash:Buffer.from(hash).toString('hex')});}
+  return JSON.stringify({algorithm:'SHA-256',accounts:values});
+}
 
 test('server validates actual catalog, scope and replay instead of trusting snapshots',()=>{
   const valid=fixture();assert.equal(cleanRecord(valid).record.operators.length,14);
@@ -81,15 +85,15 @@ test('API fails closed on missing configuration, foreign origins, bad tokens and
 });
 
 test('administrator password protects listing, edits any match and deletes private data',async()=>{
-  const {env,db}=database(),record=fixture();env.ADMIN_PASSWORD='correct horse battery staple';assert.equal((await send(env,record)).status,'uploaded');
-  const admin=(method,path,body,password=env.ADMIN_PASSWORD)=>worker.fetch(request(method,'/api/admin'+path,body,password),env);
+  const {env,db}=database(),record=fixture(),accounts={editor:'editor test password',owner:'owner test password'};env.ADMIN_ACCOUNTS=await adminAccountSecret(accounts);assert.equal((await send(env,record)).status,'uploaded');
+  const admin=(method,path,body,password=accounts.editor)=>worker.fetch(new Request('https://example.test/api/admin'+path,{method,headers:{'Content-Type':'application/json',Authorization:'Bearer '+password},body:body?JSON.stringify(body):undefined}),env);
   assert.equal((await admin('GET','/matches',null,'wrong')).status,401);
   let response=await admin('GET','/matches');assert.equal(response.status,200);assert.equal((await response.json()).total,1);
   const before=db.prepare('SELECT revision FROM stats_state').get().revision;
   response=await admin('PATCH','/matches/'+record.id,{mapId:'bank',winner:'defense'});assert.equal(response.status,200);assert.equal((await response.json()).record.mapId,'bank');
   const publicRecord=await get(env,'/api/matches/'+record.id);assert.equal(publicRecord.winner,'defense');assert.equal(db.prepare('SELECT revision FROM stats_state').get().revision,before+1);assert.match(db.prepare('SELECT private_json FROM matches').get().private_json,/私人昵称/);
   assert.equal((await admin('DELETE','/matches/'+record.id,null,'wrong')).status,401);assert.equal((await get(env,'/api/matches')).total,1);
-  assert.equal((await admin('DELETE','/matches/'+record.id)).status,200);assert.equal((await get(env,'/api/matches')).total,0);assert.equal(db.prepare('SELECT private_json FROM matches').get().private_json,null);
+  assert.equal((await admin('DELETE','/matches/'+record.id,null,accounts.owner)).status,200);assert.equal((await get(env,'/api/matches')).total,0);assert.equal(db.prepare('SELECT private_json FROM matches').get().private_json,null);
 });
 
 test('snapshot publishes SQL aggregates only on change and matches the original statistics',async()=>{
