@@ -80,6 +80,18 @@ test('API fails closed on missing configuration, foreign origins, bad tokens and
   delete env.IP_HASH_SALT;assert.equal((await worker.fetch(request('POST','/api/matches',r),env)).status,503);
 });
 
+test('administrator password protects listing, edits any match and deletes private data',async()=>{
+  const {env,db}=database(),record=fixture();env.ADMIN_PASSWORD='correct horse battery staple';assert.equal((await send(env,record)).status,'uploaded');
+  const admin=(method,path,body,password=env.ADMIN_PASSWORD)=>worker.fetch(request(method,'/api/admin'+path,body,password),env);
+  assert.equal((await admin('GET','/matches',null,'wrong')).status,401);
+  let response=await admin('GET','/matches');assert.equal(response.status,200);assert.equal((await response.json()).total,1);
+  const before=db.prepare('SELECT revision FROM stats_state').get().revision;
+  response=await admin('PATCH','/matches/'+record.id,{mapId:'bank',winner:'defense'});assert.equal(response.status,200);assert.equal((await response.json()).record.mapId,'bank');
+  const publicRecord=await get(env,'/api/matches/'+record.id);assert.equal(publicRecord.winner,'defense');assert.equal(db.prepare('SELECT revision FROM stats_state').get().revision,before+1);assert.match(db.prepare('SELECT private_json FROM matches').get().private_json,/私人昵称/);
+  assert.equal((await admin('DELETE','/matches/'+record.id,null,'wrong')).status,401);assert.equal((await get(env,'/api/matches')).total,1);
+  assert.equal((await admin('DELETE','/matches/'+record.id)).status,200);assert.equal((await get(env,'/api/matches')).total,0);assert.equal(db.prepare('SELECT private_json FROM matches').get().private_json,null);
+});
+
 test('snapshot publishes SQL aggregates only on change and matches the original statistics',async()=>{
   const {env,db}=database(),records=[fixture(),fixture({mapId:'bank',winner:'defense',scope:{alt:true,diy:false}}),fixture({mapId:'bank',matchType:'teaching'})];
   for(const r of records)assert.equal((await send(env,r)).status,'uploaded');
