@@ -252,31 +252,22 @@ function segmentHitsSmokeCell(start, end, cellX, cellY) {
     { x: cellX, y: cellY + 1 },
   ];
   if (segmentHitsPolygon(start, end, polygon)) return true;
+  // Smoke includes its boundary. This also catches a sight line that begins in
+  // smoke or starts exactly on its edge and travels out of it.
   const startInside =
-    start.x > cellX && start.x < cellX + 1 && start.y > cellY && start.y < cellY + 1;
+    start.x >= cellX && start.x <= cellX + 1 && start.y >= cellY && start.y <= cellY + 1;
   const endInside =
-    end.x > cellX && end.x < cellX + 1 && end.y > cellY && end.y < cellY + 1;
+    end.x >= cellX && end.x <= cellX + 1 && end.y >= cellY && end.y <= cellY + 1;
   return startInside || endInside;
 }
 
-function smokeBlocksLine(start, end, smokes, lineThickness) {
-  const [positiveEdge, negativeEdge] = stripEdges(start, end, lineThickness);
-
+function smokeBlocksLine(start, end, smokes) {
   for (const smoke of smokes) {
     for (let dx = 0; dx < smoke.pattern.width; dx += 1) {
       for (let dy = 0; dy < smoke.pattern.height; dy += 1) {
         const cellX = smoke.position.x + dx;
         const cellY = smoke.position.y + dy;
-        if (
-          (Math.floor(start.x) === cellX && Math.floor(start.y) === cellY) ||
-          (Math.floor(end.x) === cellX && Math.floor(end.y) === cellY)
-        ) {
-          continue;
-        }
-        if (
-          segmentHitsSmokeCell(...positiveEdge, cellX, cellY) &&
-          segmentHitsSmokeCell(...negativeEdge, cellX, cellY)
-        ) {
+        if (segmentHitsSmokeCell(start, end, cellX, cellY)) {
           return true;
         }
       }
@@ -332,7 +323,6 @@ export function checkLineOfSight({
     cellCenter(blue),
     cellCenter(orange),
     smokes,
-    lineThickness,
   );
   return {
     hasLineOfSight: !blockedBySmoke,

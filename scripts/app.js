@@ -1,5 +1,5 @@
 import {mapNames as MAP_NAMES} from "./map-names.js";
-import { checkLineOfSight as calculateLineOfSight } from "./los-engine.js";
+import { checkLineOfSight as calculateLineOfSight } from "./los-engine.js?v=smoke-los-fix-2";
 import { calculatePinchTransform, pointerPair } from "./pinch-zoom.js?v=20260903.1";
 
 const canvas = document.querySelector("#map-canvas");

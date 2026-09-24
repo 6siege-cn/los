@@ -111,3 +111,42 @@ test("smoke directly between nearby players blocks sight", () => {
     assert.equal(result.blockedBySmoke, true);
   }
 });
+
+test("a player in smoke cannot see a player outside its edge", () => {
+  for (const [blue, orange] of [
+    [{ x: 1, y: 0 }, { x: 2, y: 0 }],
+    [{ x: 2, y: 0 }, { x: 1, y: 0 }],
+  ]) {
+    const result = checkLineOfSight({
+      map: emptyMap,
+      blue,
+      orange,
+      brokenWalls: noBrokenWalls(),
+      smokes: [
+        {
+          position: { x: 1, y: 0 },
+          pattern: { width: 1, height: 1 },
+        },
+      ],
+    });
+    assert.equal(result.hasLineOfSight, false);
+    assert.equal(result.blockedBySmoke, true);
+  }
+});
+
+test("touching the boundary or corner of smoke blocks sight", () => {
+  const result = checkLineOfSight({
+    map: emptyMap,
+    blue: { x: 0, y: 0 },
+    orange: { x: 2, y: 2 },
+    brokenWalls: noBrokenWalls(),
+    smokes: [
+      {
+        position: { x: 1, y: 0 },
+        pattern: { width: 1, height: 1 },
+      },
+    ],
+  });
+  assert.equal(result.hasLineOfSight, false);
+  assert.equal(result.blockedBySmoke, true);
+});
