@@ -1,0 +1,8 @@
+{
+  "name": "six-siege-cn-relay",
+  "main": "worker.js",
+  "compatibility_date": "2026-09-28",
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": {"enabled": false}
+}
