@@ -2,6 +2,8 @@
 
 本目录中的 Worker 目前只开放 `GET /api/relay-health`。它用于验证中国大陆网络能否通过 `6siege-cnapi.icemoe.moe` 连接现有 API，不提供上传、撤回或管理员操作，也不会读写 D1。
 
+由另一个大模型代理执行朋友账号中的部署时，使用 [`AGENT_HANDOFF.md`](./AGENT_HANDOFF.md) 作为完整交接与权限边界，不要让其自行推断 DNS 操作。
+
 ## 域名所有者部署步骤
 
 1. 登录管理 `icemoe.moe` 的 Cloudflare 账号。
