@@ -13,6 +13,14 @@ export const rules = {
     {side:'attack', actions:[['pick',2],['ban',1]]},
     {side:'defense',actions:[['pick',2]]}
   ]},
+  noBan: {name:'无ban',teamSize:5,rounds:[
+    {side:'attack',actions:[['pick',1]]},
+    {side:'defense',actions:[['pick',1]]},
+    {side:'attack',actions:[['pick',2]]},
+    {side:'defense',actions:[['pick',2]]},
+    {side:'attack',actions:[['pick',2]]},
+    {side:'defense',actions:[['pick',2]]}
+  ]},
   fiveBan: { name:'5ban', teamSize:5, rounds:[
     {side:'defense',actions:[['ban',1]]},
     {side:'attack',actions:[['pick',1]]},

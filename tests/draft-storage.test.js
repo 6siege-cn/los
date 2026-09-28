@@ -15,7 +15,7 @@ test('restore replays ban-first and preserves full undo history and settings',()
   assert.ok(restored.draft.undo());assert.ok(restored.draft.undo());assert.equal(restored.draft.snapshot().history.length,0);
 });
 test('both fixed completed rules restore and can undo all the way to the beginning',()=>{
-  for(const ruleId of ['standard','fiveBan']){
+  for(const ruleId of ['standard','noBan','fiveBan']){
     const draft=createDraft(rules[ruleId],operators);
     while(!draft.snapshot().complete)draft.choose(operators.find(op=>draft.canChoose(op.id)).id);
     const restored=restoreDraft(capture(draft,ruleId),context).draft;

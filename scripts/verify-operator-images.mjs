@@ -172,6 +172,14 @@ try{
   for(let i=0;i<20;i++)await page.locator('.undo-button').click();
   assert.equal(await page.locator('.panel-link,.ban-slot img,.info-card img').count(),0);
   assert.equal(await page.locator('.rule-select').isEnabled(),true);
+  await selectRule('noBan');
+  assert.equal(await page.locator('.ban-slot').count(),0);
+  assert.equal(await page.locator('.sequence-track li').count(),10);
+  for(let i=0;i<10;i++)await page.locator('.operator-button[aria-disabled="false"]').first().click();
+  assert.equal(await page.locator('.panel-link').count(),10);
+  assert.equal(await page.locator('.ban-slot img').count(),0);
+  for(let i=0;i<10;i++)await page.locator('.undo-button').click();
+  assert.equal(await page.locator('.rule-select').isEnabled(),true);
   await selectRule('free');
   assert.equal(await page.locator('.ban-slot').count(),20);
   assert.ok((await page.locator('.phase-block strong').innerText()).startsWith('进攻方'));

@@ -1,6 +1,6 @@
 import operators from '../data/operators.js?v=recruit-correction-1';
 import {assets,settings} from './config.js?v=png-export-1';
-import {rules,actions} from './rules.js?v=free-bp-1';
+import {rules,actions} from './rules.js?v=no-ban-1';
 import {createDraft} from './engine.js';
 import {operatorFamily,versionLabel} from './identity.js';
 import {startImageCache} from './image-cache.js';

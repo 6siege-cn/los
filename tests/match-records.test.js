@@ -12,11 +12,11 @@ function completed(ruleId='standard'){
   const record=snapshotMatch({...c,state:c.draft.snapshot()},'fixture','2026-09-15T00:00:00Z');
   return {...record,mapId:'consulate',mode:'炸弹模式',winner:'defense',ending:'歼灭敌方',endRound:'+'};
 }
-test('only finished fixed drafts can become match records; both rules keep all history and ten picks',()=>{
+test('only finished fixed drafts can become match records; fixed rules keep all history and ten picks',()=>{
   const c=current();assert.throws(()=>snapshotMatch({...c,state:c.draft.snapshot()},'x','2026-09-15'),/完成/);
-  for(const id of ['standard','fiveBan']){
+  for(const id of ['standard','noBan','fiveBan']){
     const record=validateMatch(completed(id));assert.equal(record.picks.attack.length+record.picks.defense.length,10);
-    assert.equal(record.history.length,id==='standard'?14:20);assert.equal(record.bans.attack.length,id==='standard'?2:5);
+    assert.equal(record.history.length,id==='standard'?14:id==='noBan'?10:20);assert.equal(record.bans.attack.length,id==='standard'?2:id==='noBan'?0:5);
   }
 });
 test('record snapshots isolate history, metadata and operators from future edits',()=>{
