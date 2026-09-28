@@ -49,6 +49,7 @@ export function validateMatch(record){
 export const scopeLabel=scope=>['OFF',...(scope.alt?['ALT']:[]),...(scope.diy?['DIY']:[])].join(' / ');
 export const operatorLabel=op=>op.name+(op.version&&op.version!=='off'?' · '+op.version.toUpperCase():'');
 export const historyLabel=(record,event,index)=>`${String(index+1).padStart(2,'0')} · ${sideLabels[event.side]}${event.type==='pick'?'选择':'禁用'} ${operatorLabel(record.operators.find(op=>op.id===event.operatorId))}`;
+export const newestMatchFirst=(a,b)=>Date.parse(b.savedAt)-Date.parse(a.savedAt)||b.id.localeCompare(a.id);
 
 // Separate database from the current draft. Saving a record and its tag library is atomic.
 export function createMatchStore(indexedDB){
@@ -62,7 +63,7 @@ export function createMatchStore(indexedDB){
   });}
   async function list(store){const db=await open();return new Promise((resolve,reject)=>{const tx=db.transaction(store),request=tx.objectStore(store).getAll();tx.oncomplete=()=>resolve(request.result);tx.onabort=()=>reject(tx.error);tx.onerror=()=>reject(tx.error);});}
   return {
-    async records(){return (await list('matches')).sort((a,b)=>b.savedAt.localeCompare(a.savedAt)||b.id.localeCompare(a.id));},
+    async records(){return (await list('matches')).sort(newestMatchFirst);},
     async tags(){return uniqueTags([...presetTags,...(await list('tags')).map(tag=>tag.label)]);},
     async nicknames(){return (await list('nicknames')).sort((a,b)=>b.usedAt.localeCompare(a.usedAt)).slice(0,100).map(n=>n.label);},
     async pending(){return list('outbox');},

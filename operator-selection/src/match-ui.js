@@ -1,4 +1,4 @@
-import {createMatchStore,snapshotMatch,validateMatch,presetTags,uniqueTags,tagKey,marks,sideLabels,endings,endRounds,operatorLabel,mapNames,modes,mapLabel,modeLabel,matchTypes} from './match-records.js?v=community-1';
+import {createMatchStore,snapshotMatch,validateMatch,presetTags,uniqueTags,tagKey,marks,sideLabels,endings,endRounds,operatorLabel,mapNames,modes,mapLabel,modeLabel,matchTypes} from './match-records.js?v=history-order-1';
 import {el,renderMatchCard,matchPNG} from './match-card.js?v=free-bp-1';
 import {startMatchSync,syncLabels} from './match-sync.js';
 export function installMatchRecords(menuButton,{getCurrent,assets}){

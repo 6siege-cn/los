@@ -18,6 +18,12 @@ test('record and upload are atomic, opt-out stays local, nickname suggestions pe
   await assert.rejects(store.save(record,{upload:true}));assert.equal((await store.pending())[0].token,job.token);
   await store.save(fixture());assert.equal((await store.records()).length,2);assert.equal((await store.pending()).length,1);
 });
+test('history records are ordered by actual time with the newest first',async()=>{
+  const store=createMatchStore(new IDBFactory()),older=fixture(),newer=fixture();
+  older.savedAt='2026-09-28T09:00:00+08:00';newer.savedAt='2026-09-28T02:00:00Z';
+  await store.save(older);await store.save(newer);
+  assert.deepEqual((await store.records()).map(record=>record.id),[newer.id,older.id]);
+});
 test('network failure retries durably, success and quota stop; failed upload never removes local records',async()=>{
   const store=createMatchStore(new IDBFactory());await store.save(fixture(),{upload:true});
   await drainOutbox(store,{now:()=>100,fetcher:async()=>{throw Error('offline');}});assert.equal((await store.pending())[0].nextAt,15100);assert.equal((await store.records()).length,1);
