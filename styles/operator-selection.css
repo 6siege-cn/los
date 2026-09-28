@@ -265,6 +265,7 @@
   background: var(--panel-soft);
   border: 1px solid var(--line);
 }
+.free-stop-button { flex:none; height:32px; padding:3px 10px; white-space:nowrap; border-color:var(--r6s-highlight); }
 
 .avatar { display:block; width:100%; height:100%; object-fit:contain; }
 .panel-link { align-self:center; min-width:0; }
@@ -463,9 +464,14 @@ body { margin:0; }
 .ban-side:focus-visible { outline:2px solid white; outline-offset:-3px; }
 .ban-side[data-ban-count="5"] { container-type:inline-size; }
 .ban-side[data-ban-count="5"] .ban-slots span { width:min(44px,calc((100cqw - 24px) / 5)); }
+.ban-side[data-ban-count="10"] { container-type:inline-size; }
+.ban-side[data-ban-count="10"] .ban-slots { display:grid; grid-template-columns:repeat(10,minmax(0,1fr)); gap:2px; }
+.ban-side[data-ban-count="10"] .ban-slots span { width:min(34px,calc((100cqw - 26px) / 10)); }
 @media (max-width:600px) and (max-aspect-ratio:1/1) {
   .ban-side[data-ban-count="5"] .ban-slots { display:grid; grid-template-columns:repeat(3,20px); gap:1px; }
   .ban-side[data-ban-count="5"] .ban-slots span { width:20px; }
+  .ban-side[data-ban-count="10"] .ban-slots { grid-template-columns:repeat(5,10px); }
+  .ban-side[data-ban-count="10"] .ban-slots span { width:10px; }
 }
 @media (max-width:600px) and (max-aspect-ratio:1/1) {
   .operator-board { grid-template-rows:94px minmax(0,1fr) 32px; }

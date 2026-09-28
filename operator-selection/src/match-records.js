@@ -15,7 +15,8 @@ export function uniqueTags(values){
   const seen=new Set();return values.map(normalizeTag).filter(value=>{const key=tagKey(value);if(!value||seen.has(key))return false;if(value.length>24)throw Error('标签最多 24 个字符');seen.add(key);return true;});
 }
 export function snapshotMatch({state,ruleId,rule,scope,orderMode,operators},id,date){
-  if(!state.complete||Object.values(state.picks).some(ids=>ids.length!==5))throw Error('完成十名干员的选禁后才能保存对局');
+  const validFree=ruleId==='free'&&state.stopped&&Object.values(state.picks).every(ids=>ids.length===rule.teamSize)&&Object.values(state.bans).every(ids=>ids.length<=rule.banLimit);
+  if(!state.complete||(ruleId==='free'?!validFree:Object.values(state.picks).some(ids=>ids.length!==rule.teamSize)))throw Error(ruleId==='free'?'停止自由 BP 且双方各选满 5 人后才能保存对局':'完成十名干员的选禁后才能保存对局');
   const ids=new Set(state.history.map(event=>event.operatorId));
   return structuredClone({version:2,id,savedAt:date,ruleId,rule,scope,orderMode,history:state.history,picks:state.picks,bans:state.bans,
     operators:operators.filter(op=>ids.has(op.id)),mapId:'',mode:'',winner:'',ending:'',endRound:'',marks:{},tags:[]});
@@ -28,7 +29,8 @@ export function validateMatch(record){
   if(!Array.isArray(record.history)||!Array.isArray(record.operators)||!record.rule?.name||typeof record.scope?.alt!=='boolean'||typeof record.scope?.diy!=='boolean')throw Error('对局数据不完整');
   const selected=[];
   for(const side of Object.keys(sideLabels)){
-    if(!Array.isArray(record.picks?.[side])||record.picks[side].length!==5||!Array.isArray(record.bans?.[side]))throw Error('对局阵容不完整');
+    const free=record.ruleId==='free';
+    if(!Array.isArray(record.picks?.[side])||!Array.isArray(record.bans?.[side])||record.picks[side].length!==5||(free&&record.bans[side].length>10))throw Error('对局阵容不完整');
     for(const type of ['pick','ban']){
       const ids=record[type==='pick'?'picks':'bans'][side];
       if(JSON.stringify(ids)!==JSON.stringify(record.history.filter(e=>e.side===side&&e.type===type).map(e=>e.operatorId)))throw Error('对局历史不匹配');

@@ -80,7 +80,9 @@ export async function matchPNG(record,assets){
   for(const [i,side] of Object.keys(sideLabels).entries()){
     const x=48+i*576;rect(x,220,528,3,colors[side]);text(sideLabels[side],x,261,26,colors[side]);
     record.picks[side].forEach((id,j)=>drawPortrait(id,x+j*106,284,96));
-    text('禁用敌方',x,446,19,'#91a0ad');record.bans[side].forEach((id,j)=>drawPortrait(id,x+j*106,466,70));
+    text('禁用敌方',x,446,19,'#91a0ad');
+    const banCount=record.bans[side].length,banSize=Math.min(70,Math.floor((528-Math.max(0,banCount-1)*6)/Math.max(1,banCount)));
+    record.bans[side].forEach((id,j)=>drawPortrait(id,x+j*(banSize+6),466,banSize));
   }
   let y=606;for(const row of tagRows){let x=48;for(const {tag,w} of row){rect(x,y,w,32,'#303b45');text(tag,x+14,y+23,22);x+=w+10;}y+=42;}
   if(!record.tags.length)text('未添加标签',48,630,20,'#91a0ad');

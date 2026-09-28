@@ -4,7 +4,7 @@ export const storageKey='six-siege-los:operator-draft:v1';
 const dataSignature=op=>JSON.stringify([op.id,op.name,op.version,op.side,op.hp,op.close,op.medium,op.long,op.destruction,op.skill]);
 export function captureDraft({ruleId,rule,scope,orderMode,activeSide,draft,operators}){
   const history=draft.snapshot().history;
-  return {version:1,ruleId,ruleSignature:JSON.stringify(rule),scope:{...scope},orderMode,activeSide,
+  return {version:1,ruleId,ruleSignature:JSON.stringify(rule),scope:{...scope},orderMode,activeSide,stopped:draft.snapshot().stopped,
     history,operatorSignatures:history.map(event=>dataSignature(operators.find(op=>op.id===event.operatorId)))};
 }
 export function restoreDraft(record,{rules,orderModes,operators}){
@@ -20,6 +20,7 @@ export function restoreDraft(record,{rules,orderModes,operators}){
     const actual=draft.snapshot().history.at(-1);
     if(Object.keys(actual).some(key=>actual[key]!==event[key]))throw Error('选禁轮次不匹配');
   }
+  if(record.stopped&&!draft.snapshot().stopped&&!draft.stop())throw Error('停止状态与规则不匹配');
   return {draft,ruleId:record.ruleId,scope:{...record.scope},orderMode:record.orderMode,activeSide:record.activeSide};
 }
 

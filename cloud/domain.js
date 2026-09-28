@@ -13,7 +13,7 @@ export function fingerprint(record){
   return JSON.stringify([record.mapId,record.mode,record.ruleId,...['picks','bans'].flatMap(kind=>['attack','defense'].map(side=>[...record[kind][side]].sort())),record.winner]);
 }
 export function cleanRecord(input){
-  if(!input||!Object.hasOwn(rules,input.ruleId)||!Object.hasOwn(matchTypes,input.matchType)||!Array.isArray(input.history)||input.history.length>20)throw Error('无效的对局规则或类型');
+  if(!input||!Object.hasOwn(rules,input.ruleId)||!Object.hasOwn(matchTypes,input.matchType)||!Array.isArray(input.history)||input.history.length>(input.ruleId==='free'?30:20))throw Error('无效的对局规则或类型');
   if(typeof input.scope?.alt!=='boolean'||typeof input.scope?.diy!=='boolean')throw Error('无效的干员范围');
   const available=operators.filter(op=>op.version==='off'||input.scope[op.version]===true);
   const draft=createDraft(rules[input.ruleId],available);
@@ -22,6 +22,7 @@ export function cleanRecord(input){
     const actual=draft.snapshot().history.at(-1);
     if(['side','type','round','target'].some(key=>actual[key]!==event[key]))throw Error('选禁顺序不符合规则');
   }
+  if(input.ruleId==='free')draft.stop();
   const state=draft.snapshot();if(!state.complete)throw Error('对局选禁未完成');
   const used=new Set(state.history.map(e=>e.operatorId));
   const record=validateMatch({version:2,id:input.id,savedAt:input.savedAt,ruleId:input.ruleId,rule:{name:rules[input.ruleId].name},scope:{alt:input.scope.alt,diy:input.scope.diy},orderMode:input.orderMode==='time'?'time':'side',history:state.history,picks:state.picks,bans:state.bans,operators:catalog.filter(op=>used.has(op.id)),mapId:input.mapId,mode:input.mode,winner:input.winner,ending:input.ending,endRound:input.endRound,marks:{},tags:[],matchType:input.matchType});

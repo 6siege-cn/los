@@ -172,6 +172,33 @@ try{
   for(let i=0;i<20;i++)await page.locator('.undo-button').click();
   assert.equal(await page.locator('.panel-link,.ban-slot img,.info-card img').count(),0);
   assert.equal(await page.locator('.rule-select').isEnabled(),true);
+  await selectRule('free');
+  assert.equal(await page.locator('.ban-slot').count(),20);
+  assert.ok((await page.locator('.phase-block strong').innerText()).startsWith('进攻方'));
+  await page.locator('#tab-attack').click();await page.locator('.operator-button[aria-disabled="false"]').first().click();
+  assert.ok((await page.locator('.phase-block strong').innerText()).startsWith('防守方'));
+  await page.locator('#tab-attack').click();await page.locator('.operator-button[aria-disabled="false"]').first().click();
+  assert.equal(await page.locator('.ban-slot img').count(),1);
+  await page.locator('.free-stop-button').click();
+  assert.match(await page.locator('.phase-block strong').innerText(),/已停止/);
+  await page.locator('.menu-button').click();
+  assert.equal(await page.getByRole('button',{name:'保存对局',exact:true}).isDisabled(),true);
+  await page.getByRole('button',{name:'关闭对局记录',exact:true}).click();
+  await page.locator('.free-stop-button').click();
+  while(await page.locator('.panel-link').count()<10){
+    const actor=(await page.locator('.phase-block strong').innerText()).startsWith('进攻方')?'attack':'defense';
+    const target=await page.locator('.team-column--'+actor+' .panel-link').count()<5?actor:actor==='attack'?'defense':'attack';
+    await page.locator('#tab-'+target).click();await page.locator('.operator-button[aria-disabled="false"]').first().click();
+  }
+  await page.locator('.free-stop-button').click();await page.locator('.menu-button').click();
+  assert.equal(await page.getByRole('button',{name:'保存对局',exact:true}).isEnabled(),true);
+  await page.getByRole('button',{name:'关闭对局记录',exact:true}).click();
+  for(const [width,height] of [[320,568],[667,300],[1366,768]]){
+    await page.setViewportSize({width,height});
+    assert.equal(await page.locator('.ban-side').evaluateAll(sides=>sides.every(side=>{
+      const b=side.getBoundingClientRect();return [...side.querySelectorAll('.ban-slot')].every(slot=>{const r=slot.getBoundingClientRect();return r.left>=b.left&&r.right<=b.right&&r.top>=b.top&&r.bottom<=b.bottom;});
+    })),true,`Ten bans must fit at ${width}x${height}`);
+  }
   await page.locator('.reset-button').click();
   assert.equal(await page.locator('.rule-select').inputValue(),'standard');
   await page.route('**/rules.js*',async route=>{

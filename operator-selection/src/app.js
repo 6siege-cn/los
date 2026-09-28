@@ -1,6 +1,6 @@
 import operators from '../data/operators.js?v=recruit-correction-1';
 import {assets,settings} from './config.js?v=png-export-1';
-import {rules,actions} from './rules.js?v=five-ban-1';
+import {rules,actions} from './rules.js?v=free-bp-1';
 import {createDraft} from './engine.js';
 import {operatorFamily,versionLabel} from './identity.js';
 import {startImageCache} from './image-cache.js';
@@ -10,7 +10,7 @@ import {defaultScope,inScope} from './operator-scope.js';
 import {sortOperators,orderModes,defaultOrder} from './operator-order.js?v=unified-settings-1';
 import {installSkillPreview} from './skill-preview.js?v=native-menu-2';
 import {storageKey,captureDraft,restoreDraft,createDraftStorage} from './draft-storage.js';
-import {installMatchRecords} from './match-ui.js?v=statistics-2';
+import {installMatchRecords} from './match-ui.js?v=free-bp-1';
 let scope={...defaultScope};
 let orderMode=defaultOrder;
 const availableOperators=()=>operators.filter(op=>inScope(op,scope));
@@ -123,6 +123,7 @@ function renderGrid(state){
 }
 const footer=document.querySelector('.sequence-region');footer.replaceChildren();
 const track=node('ol','sequence-track'),undo=node('button','undo-button');undo.type='button';undo.append(icon('undo'));undo.title='撤回';undo.addEventListener('click',()=>{const last=draft.snapshot().history.at(-1);if(draft.undo()){activeSide=last.target;render();}});footer.append(track);
+const freeStop=node('button','free-stop-button','停止 BP');freeStop.type='button';freeStop.addEventListener('click',()=>{const state=draft.snapshot();if(state.stopped?draft.resume():draft.stop())render();});footer.append(freeStop);
 const phase=document.querySelector('.phase-block');phase.setAttribute('aria-live','polite');
 const menuButton=node('button','menu-button');menuButton.type='button';menuButton.setAttribute('aria-label','对局记录');menuButton.title='对局记录';menuButton.append(icon('rules'));
 const ruleSelect=node('select','rule-select settings-select');
@@ -181,9 +182,13 @@ function render(){
   for(const [key,input] of Object.entries(scopeInputs)){input.checked=scope[key];input.disabled=settingsButton.disabled;}
   track.style.gridTemplateColumns=`repeat(${state.timeline.length},minmax(0,1fr))`;
   const tasks=[...new Set(state.available.map(s=>s.type))].map(type=>actions[type].label+' '+state.available.filter(s=>s.type===type).length);
-  phase.replaceChildren(node('span','eyebrow',rule.name),node('strong','',state.step?sideName[state.step.side]+' · '+tasks.join(' / '):'选用完成'),node('span','timer-placeholder',state.step?'第 '+state.step.round+' / '+rule.rounds.length+' 轮 · 顺序不限':'5 对 5'));
+  const phaseTitle=state.stopped?'自由 BP 已停止':state.step?sideName[state.step.side]+' · '+tasks.join(' / '):'选用完成';
+  const fullTeams=Object.values(state.picks).every(ids=>ids.length===rule.teamSize);
+  const phaseHint=rule.free?(state.stopped?(fullTeams?'阵容已满，可保存对局':'双方须各选满 5 人，可继续操作'):`第 ${state.history.length+1} 次操作 · 选择或禁用`):(state.step?'第 '+state.step.round+' / '+rule.rounds.length+' 轮 · 顺序不限':'5 对 5');
+  phase.replaceChildren(node('span','eyebrow',rule.name),node('strong','',phaseTitle),node('span','timer-placeholder',phaseHint));
   track.replaceChildren();state.timeline.forEach((step,i)=>{const current=i>=state.history.length&&step.round===state.step?.round;const li=node('li',i<state.history.length?'done':current?'current':'');li.style.setProperty('--owner-color',settings.colors[step.side]);li.title=sideName[step.side]+' '+actions[step.type].label+sideName[step.target];li.setAttribute('aria-label',li.title);if(current)li.setAttribute('aria-current','step');li.append(icon(step.type));track.append(li);});
   undo.disabled=!state.history.length;renderGrid(state);persist();
+  freeStop.hidden=!rule.free;freeStop.textContent=state.stopped?'继续 BP':'停止 BP';
 }
 restoreSaved();
 const restoredReady=saveReady;saveReady=false;

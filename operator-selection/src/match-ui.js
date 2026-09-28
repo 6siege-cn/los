@@ -1,5 +1,5 @@
 import {createMatchStore,snapshotMatch,validateMatch,presetTags,uniqueTags,tagKey,marks,sideLabels,endings,endRounds,operatorLabel,mapNames,modes,mapLabel,modeLabel,matchTypes} from './match-records.js?v=community-1';
-import {el,renderMatchCard,matchPNG} from './match-card.js?v=winner-theme-1';
+import {el,renderMatchCard,matchPNG} from './match-card.js?v=free-bp-1';
 import {startMatchSync,syncLabels} from './match-sync.js';
 export function installMatchRecords(menuButton,{getCurrent,assets}){
   const store=createMatchStore(globalThis.indexedDB);
@@ -18,9 +18,10 @@ export function installMatchRecords(menuButton,{getCurrent,assets}){
   function message(text){status.textContent=text;}
   function changeView(label){delete dialog.dataset.winner;viewToken++;editor=null;closeMarks();title.textContent=label;content.replaceChildren();message('');dialog.scrollTop=0;return viewToken;}
   function fail(error){message('操作失败：'+(error?.message||'浏览器存储不可用')+'。未保存的内容仍保留在当前窗口。');}
+  const canSave=({state,rule})=>state.complete&&(!rule.free||state.stopped)&&Object.values(state.picks).every(ids=>ids.length===rule.teamSize);
   menuButton.title='对局记录';menuButton.setAttribute('aria-label','对局记录');menuButton.setAttribute('aria-haspopup','dialog');menuButton.setAttribute('aria-controls',dialog.id);
   menuButton.addEventListener('click',()=>{
-    saveEntry.disabled=!getCurrent().state.complete;saveEntry.title=saveEntry.disabled?'完成全部选禁后可保存':'';
+    const current=getCurrent();saveEntry.disabled=!canSave(current);saveEntry.title=saveEntry.disabled?(current.ruleId==='free'?'停止自由 BP 且双方各选满 5 人后可保存':'完成全部选禁后可保存'):'';
     if(!dialog.open)dialog.showModal();history();
   });
   dialog.addEventListener('close',()=>{viewToken++;closeMarks();});
@@ -64,7 +65,7 @@ export function installMatchRecords(menuButton,{getCurrent,assets}){
     catch(error){message('下载失败：'+error.message+'。已保存的对局不受影响。');}finally{b.disabled=false;}
   }
   async function edit(){
-    if(!getCurrent().state.complete){message('完成全部选禁后才能保存对局。');return;}
+    if(!canSave(getCurrent())){message(getCurrent().ruleId==='free'?'停止自由 BP 且双方各选满 5 人后才能保存对局。':'完成全部选禁后才能保存对局。');return;}
     const token=changeView('保存对局');
     try{
       const record={...snapshotMatch(getCurrent(),crypto.randomUUID(),new Date().toISOString()),matchType:'normal',players:{attack:'',defense:''},notes:''};editor=record;
@@ -101,7 +102,7 @@ export function installMatchRecords(menuButton,{getCurrent,assets}){
       form.addEventListener('submit',async event=>{
         event.preventDefault();if(submit.disabled)return;
         const current=getCurrent().state;
-        if(!current.complete||JSON.stringify(current.history)!==JSON.stringify(record.history)){message('当前选禁已变化，请重新打开保存对局。');return;}
+        if(!canSave(getCurrent())||JSON.stringify(current.history)!==JSON.stringify(record.history)){message('当前选禁已变化，请重新打开保存对局。');return;}
         record.savedAt=new Date().toISOString();
         try{validateMatch(record);}catch(error){message(error.message);return;}
         submit.disabled=true;message('正在保存…');

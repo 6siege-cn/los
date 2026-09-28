@@ -14,7 +14,7 @@ const controls={};
 function button(label,action){const b=el('button','',label);b.type='button';b.addEventListener('click',action);return b;}
 function select(key,label,items,initial){const wrap=el('label'),input=el('select');input.name=key;input.setAttribute('aria-label',label);for(const [value,text] of items){const option=el('option','',text);option.value=value;input.append(option);}input.value=initial;wrap.append(el('span','',label),input);filters.append(wrap);controls[key]=input;input.addEventListener('change',()=>{operatorPage=1;render();});}
 select('mapId','地图',[['','全部地图'],...Object.entries(mapNames)],'');
-select('ruleId','规则',[['','全部规则'],['standard','标准规则'],['fiveBan','5ban'],['historical','历史规则未确认']],'');
+select('ruleId','规则',[['','全部规则'],['standard','标准规则'],['fiveBan','5ban'],['free','自由BP'],['historical','历史规则未确认']],'');
 select('mode','模式',[['','全部模式'],...modes.map(m=>[m,m]),['模式未记录','模式未记录']],'');
 select('matchType','对局类型',Object.entries(matchTypes).concat([['all','全部类型']]),'normal');
 select('version','干员版本',[['','全部版本'],['off','OFF'],['alt','ALT'],['diy','DIY'],['legacy','历史独立干员']],'');
