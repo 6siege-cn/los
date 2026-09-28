@@ -16,10 +16,10 @@ test('abnormal labels, incomplete lineups, conflicts and unclear maps are exclud
   for(const changes of [{Z:'教学局'},{Z:'萌新局'},{Z:'推新局'},{Z:'测试新规则'},{Z:'封盘'},{O:'进攻(数据不足)'},{E:undefined},{P:'sledge'},{D:'C'},{J:'ash'},{O:undefined}])assert.ok(normalizeHistoricalRow(row(changes),options).reasons.length,JSON.stringify(changes));
   assert.equal(normalizeHistoricalRow(row({Z:'5b；2v2，计时，失误多，经验不足，教训很多'}),options).reasons.length,0);
 });
-test('nonstandard and asymmetric ban counts use free BP without inventing history',()=>{
+test('zero bans use no-ban; other nonstandard counts use free BP without inventing history',()=>{
   const cases=[
     {changes:{Y:undefined},attack:5,defense:4,ruleId:'free'},
-    {changes:{P:undefined,Q:undefined,R:undefined,S:undefined,T:undefined,U:undefined,V:undefined,W:undefined,X:undefined,Y:undefined},attack:0,defense:0,ruleId:'free'},
+    {changes:{P:undefined,Q:undefined,R:undefined,S:undefined,T:undefined,U:undefined,V:undefined,W:undefined,X:undefined,Y:undefined},attack:0,defense:0,ruleId:'noBan'},
     {changes:{R:undefined,S:undefined,T:undefined,W:undefined,X:undefined,Y:undefined},attack:2,defense:2,ruleId:'standard'},
   ];
   for(const {changes,attack,defense,ruleId} of cases){
@@ -29,12 +29,16 @@ test('nonstandard and asymmetric ban counts use free BP without inventing histor
     assert.equal(item.record.bans.attack.length,defense);
     assert.equal(item.record.bans.defense.length,attack);
     assert.deepEqual(item.record.history,[]);
+    if(ruleId==='noBan')assert.equal(item.record.source.bansRecorded,false);
   }
+  const markedFiveBan=normalizeHistoricalRow(row({P:undefined,Q:undefined,R:undefined,S:undefined,T:undefined,U:undefined,V:undefined,W:undefined,X:undefined,Y:undefined}),options);
+  assert.equal(markedFiveBan.record.ruleId,'fiveBan');
+  assert.ok(markedFiveBan.reasons.includes('5ban 禁用记录不完整'));
 });
 test('unknown dates and bans stay unknown; historical operators are not silently remapped to ALT',()=>{
   const emptyBans=Object.fromEntries([...'PQRSTUVWXY'].map(k=>[k,undefined]));
   const item=normalizeHistoricalRow(row({...emptyBans,A:'视频来源',Z:undefined,E:'offglaz',I:'deimos',J:'extachanka'}),options);
-  assert.deepEqual(item.reasons,[]);assert.equal(item.record.source.playedOn,null);assert.equal(item.record.source.bansRecorded,false);assert.equal(item.record.ruleId,'free');assert.equal(item.record.picks.defense[0],'historical_extachanka');assert.equal(item.record.picks.attack[0],'glaz');
+  assert.deepEqual(item.reasons,[]);assert.equal(item.record.source.playedOn,null);assert.equal(item.record.source.bansRecorded,false);assert.equal(item.record.ruleId,'noBan');assert.equal(item.record.picks.defense[0],'historical_extachanka');assert.equal(item.record.picks.attack[0],'glaz');
   assert.ok(!JSON.stringify(item.record).includes('视频来源'));assert.equal(item.record.scope.alt,null);
 });
 test('same dated matchup deduplicates; undated matches do not invent shared days',()=>{

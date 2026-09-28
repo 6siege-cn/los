@@ -14,12 +14,12 @@ writeFileSync(credentialPath,JSON.stringify(credentials),{mode:0o600});const opt
 const plan=prepareHistoricalImport(sheet.rows.slice(1),{source:basename(workbook)}),all=[...plan.accepted,...plan.excluded].sort((a,b)=>a.row-b.row);
 writeFileSync(resolve(out,'plan.json'),JSON.stringify(plan,null,2));
 writeFileSync(resolve(out,'import.sql'),historicalImportSQL(plan,options));writeFileSync(resolve(out,'rollback.sql'),historicalRollbackSQL(options));
-const summary={sourceRows:sheet.rows.length-1,accepted:plan.accepted.length,excluded:plan.excluded.length,rules:Object.fromEntries(['standard','fiveBan','free'].map(rule=>[rule,plan.accepted.filter(i=>i.record.ruleId===rule).length])),missingDates:plan.accepted.filter(i=>!i.record.source.playedOn).length,missingBans:plan.accepted.filter(i=>!i.record.source.bansRecorded).length,attackWins:plan.accepted.filter(i=>i.record.winner==='attack').length};
+const summary={sourceRows:sheet.rows.length-1,accepted:plan.accepted.length,excluded:plan.excluded.length,rules:Object.fromEntries(['standard','noBan','fiveBan','free'].map(rule=>[rule,plan.accepted.filter(i=>i.record.ruleId===rule).length])),missingDates:plan.accepted.filter(i=>!i.record.source.playedOn).length,missingBans:plan.accepted.filter(i=>!i.record.source.bansRecorded).length,attackWins:plan.accepted.filter(i=>i.record.winner==='attack').length};
 const escape=value=>String(value).replaceAll('|','／').replaceAll('\n','；');
 const report=['# 历史对局导入核对',`来源：${basename(workbook)} / 日志，第 2～${sheet.rows.at(-1).row} 行。`,
-  `共 ${summary.sourceRows} 条，保留 ${summary.accepted} 条，排除 ${summary.excluded} 条。标准规则 ${summary.rules.standard} 条，5ban ${summary.rules.fiveBan} 条，自由 BP ${summary.rules.free} 条。`,
-  `进攻胜 ${summary.attackWins} 局，防守胜 ${summary.accepted-summary.attackWins} 局。${summary.missingDates} 局日期未记录，${summary.missingBans} 局禁用未记录。`,
-  '5b / 5ban 统一为 5ban；没有明确标注时，双方各 5 个禁用识别为 5ban，各 2 个识别为标准规则，其余识别为自由 BP。禁用列按被禁干员阵营转换。',
+  `共 ${summary.sourceRows} 条，保留 ${summary.accepted} 条，排除 ${summary.excluded} 条。标准规则 ${summary.rules.standard} 条，无ban ${summary.rules.noBan} 条，5ban ${summary.rules.fiveBan} 条，自由 BP ${summary.rules.free} 条。`,
+  `进攻胜 ${summary.attackWins} 局，防守胜 ${summary.accepted-summary.attackWins} 局。${summary.missingDates} 局日期未记录，${summary.missingBans} 局不计入禁用率分母（无ban或禁用记录不完整）。`,
+  '5b / 5ban 统一为 5ban；没有明确标注时，双方各 5 个禁用识别为 5ban，各 2 个识别为标准规则，双方均无禁用识别为无ban，其余识别为自由 BP。禁用列按被禁干员阵营转换。',
   '日期、模式、结束方式、结束回合、选禁顺序没有依据时不补造。普通失误、运气、经验不足、计时、人质与正常 2v2 不自动判为异常。',
   '历史干员范围未记录，出场率采用所选历史对局数作为分母。没有禁用记录的对局不参与禁用率分母；涉及缺失禁用时不提供 BP率。历史独立干员不自动合并到现有 ALT/OFF。',
   '昵称与备注仅进入私人字段，不出现在公开页面。原始工作簿未修改。',

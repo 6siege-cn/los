@@ -31,15 +31,15 @@ export function normalizeHistoricalRow(input,{source='对局日志.xlsx',importe
   if(new Set(families).size!==families.length)reasons.push('选禁中存在重复干员或同名版本冲突');
   const is5ban=/(?:^|[^a-z0-9])5\s*b(?:an)?(?=$|[^a-z])/i.test(description);
   if(is5ban&&(bannedAttack.length!==5||bannedDefense.length!==5))reasons.push('5ban 禁用记录不完整');
-  const ruleId=is5ban||bannedAttack.length===5&&bannedDefense.length===5?'fiveBan':bannedAttack.length===2&&bannedDefense.length===2?'standard':'free';
-  const ruleName=ruleId==='fiveBan'?'5ban':ruleId==='standard'?'标准规则':'自由BP';
+  const ruleId=is5ban||bannedAttack.length===5&&bannedDefense.length===5?'fiveBan':bannedAttack.length===2&&bannedDefense.length===2?'standard':bannedAttack.length===0&&bannedDefense.length===0?'noBan':'free';
+  const ruleName=ruleId==='fiveBan'?'5ban':ruleId==='standard'?'标准规则':ruleId==='noBan'?'无ban':'自由BP';
   if(!is5ban)warnings.push('规则由双方禁用数量识别');
   const serial=Number(c.A),playedOn=c.A&&Number.isFinite(serial)&&serial>20000&&serial<70000?new Date(Date.UTC(1899,11,30)+Math.floor(serial)*86400000).toISOString().slice(0,10):null;
   if(!playedOn)warnings.push('日期未记录');
   if(playedOn&&playedOn>importedAt.slice(0,10))reasons.push('日期晚于导入日');
   const mode=/人质/.test(description)?'人质模式':/肃清/.test(description)?'肃清威胁':/拆弹|炸弹/.test(description)?'炸弹模式':'模式未记录';
   const bansRecorded=bannedAttack.length>0&&bannedDefense.length>0;
-  if(!bansRecorded)warnings.push('禁用未记录，不计入禁用率分母');
+  if(!bansRecorded)warnings.push(ruleId==='noBan'?'双方无禁用，按无ban归类；不计入禁用率分母':'至少一方禁用未记录，不计入禁用率分母');
   if(used.some(op=>op.historicalOnly))warnings.push('含历史独立干员');
   const record={version:3,savedAt:importedAt,ruleId,rule:{name:ruleName},scope:{alt:null,diy:null},orderMode:null,history:[],
     picks:{attack:attack.map(o=>o.id),defense:defense.map(o=>o.id)},bans:{attack:bannedDefense.map(o=>o.id),defense:bannedAttack.map(o=>o.id)},
