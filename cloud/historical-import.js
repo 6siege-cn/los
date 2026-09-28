@@ -29,13 +29,11 @@ export function normalizeHistoricalRow(input,{source='对局日志.xlsx',importe
   if(attack.length!==5||defense.length!==5)reasons.push('双方阵容不是完整的 5 名干员');
   const used=[...attack,...defense,...bannedAttack,...bannedDefense],families=used.map(operatorFamily);
   if(new Set(families).size!==families.length)reasons.push('选禁中存在重复干员或同名版本冲突');
-  if(bannedAttack.length!==bannedDefense.length)reasons.push('双方禁用数量不一致');
   const is5ban=/(?:^|[^a-z0-9])5\s*b(?:an)?(?=$|[^a-z])/i.test(description);
   if(is5ban&&(bannedAttack.length!==5||bannedDefense.length!==5))reasons.push('5ban 禁用记录不完整');
-  const ruleId=is5ban||bannedAttack.length===5&&bannedDefense.length===5?'fiveBan':bannedAttack.length===2&&bannedDefense.length===2?'standard':'historical';
-  const ruleName=ruleId==='fiveBan'?'5ban':ruleId==='standard'?'标准规则':'历史规则未确认';
-  if(!is5ban&&ruleId!=='historical')warnings.push('规则由双方禁用数量识别');
-  if(ruleId==='historical')warnings.push('原表不足以确认当前规则');
+  const ruleId=is5ban||bannedAttack.length===5&&bannedDefense.length===5?'fiveBan':bannedAttack.length===2&&bannedDefense.length===2?'standard':'free';
+  const ruleName=ruleId==='fiveBan'?'5ban':ruleId==='standard'?'标准规则':'自由BP';
+  if(!is5ban)warnings.push('规则由双方禁用数量识别');
   const serial=Number(c.A),playedOn=c.A&&Number.isFinite(serial)&&serial>20000&&serial<70000?new Date(Date.UTC(1899,11,30)+Math.floor(serial)*86400000).toISOString().slice(0,10):null;
   if(!playedOn)warnings.push('日期未记录');
   if(playedOn&&playedOn>importedAt.slice(0,10))reasons.push('日期晚于导入日');
@@ -46,7 +44,7 @@ export function normalizeHistoricalRow(input,{source='对局日志.xlsx',importe
   const record={version:3,savedAt:importedAt,ruleId,rule:{name:ruleName},scope:{alt:null,diy:null},orderMode:null,history:[],
     picks:{attack:attack.map(o=>o.id),defense:defense.map(o=>o.id)},bans:{attack:bannedDefense.map(o=>o.id),defense:bannedAttack.map(o=>o.id)},
     operators:[...new Map(used.map(op=>[op.id,op])).values()],mapId,mode,winner,ending:null,endRound:null,marks:{},tags:[],matchType:'normal',
-    source:{kind:'xlsx',label:source,sheet:'日志',row:input.row,playedOn,bansRecorded,ruleInferred:!is5ban&&ruleId!=='historical',scopeUnrecorded:true}};
+    source:{kind:'xlsx',label:source,sheet:'日志',row:input.row,playedOn,bansRecorded,ruleInferred:!is5ban,scopeUnrecorded:true}};
   const privateData={players:{attack:c.B||'',defense:c.C||''},notes};
   // A dated match follows the live same-day fingerprint. Undated matches deduplicate only exact source content.
   const fp=hash(fingerprint(record)),identity=playedOn?playedOn+'|'+fp:JSON.stringify([fp,c.A||'',privateData]);
