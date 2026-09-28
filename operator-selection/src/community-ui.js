@@ -1,13 +1,15 @@
 import {el,renderMatchCard} from './match-card.js?v=winner-theme-1';
 import {mapNames,modes,endings,endRounds,mapLabel,modeLabel,sideLabels,matchTypes} from './match-records.js?v=community-1';
 import {API} from './match-sync.js';
+import {publicReadURL} from './community-source.js';
 import {renderHistoricalCard,publicDateLabel} from './historical-card.js?v=history-1';
 
 // Public records are deliberately separate from delayed aggregate snapshots.
 export function installCommunityViews({content,message,changeView,isCurrent,button,assets}){
   let adminPassword='';
   async function request(path,options={}){
-    const response=await fetch(API+path,{signal:AbortSignal.timeout(20000),cache:'no-store',...options});
+    const method=options.method??'GET',url=method==='GET'?publicReadURL(path):API+path;
+    const response=await fetch(url,{signal:AbortSignal.timeout(20000),cache:'no-store',...options});
     const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.error||'社区服务暂时不可用');return data;
   }
   const get=path=>request(path);
@@ -25,7 +27,7 @@ export function installCommunityViews({content,message,changeView,isCurrent,butt
   async function matches(page=1){
     const token=changeView('公开对局');message('正在读取公开对局…');
     try{const data=await get('/api/matches?page='+page);if(!isCurrent(token))return;
-      message(`共 ${data.total} 局 · 昵称与备注不公开 · 公开列表与定时统计分开更新`);recordList(data,page,(record,current)=>detail(record.id,current));pageControls(data,page,matches);adminEntry();
+      message(`共 ${data.total} 局 · 昵称与备注不公开 · 公开列表约每小时更新`);recordList(data,page,(record,current)=>detail(record.id,current));pageControls(data,page,matches);adminEntry();
     }catch{if(isCurrent(token)){message('社区暂时无法连接。');content.append(button('重新加载',()=>matches(page)));}}
   }
   async function detail(id,page){const token=changeView('公开对局详情');message('正在读取…');try{const record=await get('/api/matches/'+id);if(!isCurrent(token))return;message(`${record.source?.kind==='xlsx'?'历史导入':matchTypes[record.matchType]} · ${publicDateLabel(record)}`);content.append(record.source?.kind==='xlsx'?renderHistoricalCard(record,assets):renderMatchCard(record,assets),button('返回公开对局',()=>matches(page)));}catch{if(isCurrent(token)){message('无法读取该对局，可能已被上传者撤回。');content.append(button('返回公开对局',()=>matches(page)));}}}

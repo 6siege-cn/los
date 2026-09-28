@@ -29,7 +29,7 @@ Cloudflare Cron 每小时整点执行一次。新增和撤回触发数据修订�
 
 管理员账户通过 Worker 加密密钥 `ADMIN_ACCOUNTS` 配置，只保存带 32 字节随机盐的 SHA-256 摘要，不写入代码、数据库或网页。公开对局页底部的无提示密码框根据密码识别管理员身份并进入管理模式；管理员可更正对局元数据或删除任意公开记录。密码只保存在当前页面内存，刷新即退出。编辑和删除都会推进统计修订号，下一次定时汇总后生效。
 
-公开列表及详情不缓存，成功撤回后立即不可读取；汇总统计和已缓存的图表存在延迟，正常情况下重新进入页面约 1～1.5 小时内看到变化。快照展示生成及核对时间。免费额度并非无限，规模扩大后需监测 D1 读行和 Worker 用量，再考虑增量聚合。
+公开列表、详情和统计快照由 GitHub Actions 约每小时复制到 GitHub Pages，供网页同域读取；成功提交、修改或撤回后，公开页面通常会在下一次镜像部署后更新。GitHub 定时任务可能延迟，镜像生成失败时保留上一次成功发布的数据。快照展示生成及核对时间。免费额度并非无限，规模扩大后需监测 D1 读行、Worker 和 GitHub Actions 用量。
 
 本地预览运行 `node scripts/dev-community.mjs`，只使用 `.wrangler/community-local.sqlite`。本地专用 `POST /api/local/rebuild` 可立即发布测试快照，生产没有此入口。真实 Worker 集成测试先应用本地迁移，再用 `wrangler dev --test-scheduled --config cloud/wrangler.jsonc --port 8790` 启动，执行 `node scripts/check-community-api.mjs`。
 

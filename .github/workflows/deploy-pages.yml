@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
 
 permissions:
   contents: read
@@ -43,7 +45,9 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Prepare static site
-        run: rsync -a --exclude='site-dist/' --exclude='node_modules/' --exclude='.git/' --exclude='.github/' --exclude='.wrangler/' --exclude='.dev.vars*' --exclude='.env*' --exclude='cloud/' --exclude='tests/' ./ site-dist/
+        run: |
+          rsync -a --exclude='site-dist/' --exclude='node_modules/' --exclude='.git/' --exclude='.github/' --exclude='.wrangler/' --exclude='.dev.vars*' --exclude='.env*' --exclude='cloud/' --exclude='tests/' ./ site-dist/
+          node scripts/build-community-mirror.mjs site-dist/community-data
 
       - name: Upload static site
         uses: actions/upload-pages-artifact@v4

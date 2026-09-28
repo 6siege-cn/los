@@ -1,10 +1,10 @@
-import {createSnapshotClient} from './cache.js?v=history-1';
+import {createSnapshotClient} from './cache.js?v=mirror-1';
 import {aggregateSnapshot} from './model.js?v=history-1';
 import {renderChart,percentage} from './chart.js?v=history-1';
 import {el} from '../operator-selection/src/match-card.js?v=winner-theme-1';
 import {assets} from '../operator-selection/src/config.js';
 import {mapNames,modes,matchTypes} from '../operator-selection/src/match-records.js?v=community-1';
-import {installCommunityViews} from '../operator-selection/src/community-ui.js?v=admin-2';
+import {installCommunityViews} from '../operator-selection/src/community-ui.js?v=mirror-1';
 
 const content=document.querySelector('#statistics-content'),filters=document.querySelector('#statistics-filters'),status=document.querySelector('#statistics-status'),time=document.querySelector('#snapshot-time'),refresh=document.querySelector('#refresh-statistics');
 let storage;try{storage=localStorage;}catch{}
