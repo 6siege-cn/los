@@ -14,7 +14,7 @@ export function normalizeHistoricalRow(input,{source='对局日志.xlsx',importe
   if(/教学|萌新|推新/.test(description))reasons.push('教学或新手教学局');
   if(/测试/.test(description))reasons.push('测试规则');
   if(/封盘/.test(description))reasons.push('封盘未完成');
-  if(/数据不足|ban位没/.test(description))reasons.push('明确标记数据不完整');
+  if(/数据不足/.test(description))reasons.push('明确标记数据不完整');
   const winner=c.O==='进攻'?'attack':['防守','防守(肃清区域)'].includes(c.O)?'defense':null;
   if(!winner&&!reasons.length)reasons.push('缺少有效胜负');
   const mapId=mapIds[c.D?.toLowerCase()];if(!mapId)reasons.push('地图无法确定：'+(c.D||'空白'));
@@ -38,8 +38,10 @@ export function normalizeHistoricalRow(input,{source='对局日志.xlsx',importe
   if(!playedOn)warnings.push('日期未记录');
   if(playedOn&&playedOn>importedAt.slice(0,10))reasons.push('日期晚于导入日');
   const mode=/人质/.test(description)?'人质模式':/肃清/.test(description)?'肃清威胁':/拆弹|炸弹/.test(description)?'炸弹模式':'模式未记录';
-  const bansRecorded=bannedAttack.length>0&&bannedDefense.length>0;
-  if(!bansRecorded)warnings.push(ruleId==='noBan'?'双方无禁用，按无ban归类；不计入禁用率分母':'至少一方禁用未记录，不计入禁用率分母');
+  const banDetailsIncomplete=/ban位没/.test(description);
+  const bansRecorded=!banDetailsIncomplete&&bannedAttack.length>0&&bannedDefense.length>0;
+  if(banDetailsIncomplete)warnings.push('备注说明禁用未看全，不计入禁用率分母');
+  else if(!bansRecorded)warnings.push(ruleId==='noBan'?'双方无禁用，按无ban归类；不计入禁用率分母':'至少一方禁用未记录，不计入禁用率分母');
   if(used.some(op=>op.historicalOnly))warnings.push('含历史独立干员');
   const record={version:3,savedAt:importedAt,ruleId,rule:{name:ruleName},scope:{alt:null,diy:null},orderMode:null,history:[],
     picks:{attack:attack.map(o=>o.id),defense:defense.map(o=>o.id)},bans:{attack:bannedDefense.map(o=>o.id),defense:bannedAttack.map(o=>o.id)},

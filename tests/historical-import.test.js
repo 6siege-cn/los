@@ -35,6 +35,22 @@ test('zero bans use no-ban; other nonstandard counts use free BP without inventi
   assert.equal(markedFiveBan.record.ruleId,'fiveBan');
   assert.ok(markedFiveBan.reasons.includes('5ban 禁用记录不完整'));
 });
+test('unseen ban slots retain matches under the observed rule without counting ban rates',()=>{
+  const missing={Q:undefined,R:undefined,S:undefined,T:undefined,V:undefined,W:undefined,X:undefined,Y:undefined};
+  for(const [changes,note,recordedDefenseBans] of [
+    [{...missing,U:undefined},'bp，但是ban位没看到',0],
+    [missing,'bp，但是ban位没看全',1],
+  ]){
+    const item=normalizeHistoricalRow(row({...changes,Z:note,A:undefined}),options);
+    assert.deepEqual(item.reasons,[]);
+    assert.equal(item.record.ruleId,'free');
+    assert.equal(item.record.bans.attack.length,recordedDefenseBans);
+    assert.equal(item.record.bans.defense.length,1);
+    assert.equal(item.record.source.bansRecorded,false);
+    assert.ok(item.warnings.some(warning=>warning.includes('禁用未看全')));
+    assert.equal(item.privateData.notes,note.normalize('NFKC'));
+  }
+});
 test('unknown dates and bans stay unknown; historical operators are not silently remapped to ALT',()=>{
   const emptyBans=Object.fromEntries([...'PQRSTUVWXY'].map(k=>[k,undefined]));
   const item=normalizeHistoricalRow(row({...emptyBans,A:'视频来源',Z:undefined,E:'offglaz',I:'deimos',J:'extachanka'}),options);
